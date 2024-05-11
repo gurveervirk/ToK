@@ -1,70 +1,33 @@
-# Getting Started with Create React App
+# Trove Of Knowledge
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This project aims to use AI models and indices to query documents and retrieve better-informed responses from the models. It allows you to upload your documents that will be used to answer any corresponding queries.
 
-## Available Scripts
+## Getting Started
 
-In the project directory, you can run:
+If you are using a Linux-based OS, you would have to give permissions to the shell scripts using: ```chmod +x *.sh```
 
-### `npm start`
+1. Run ```scripts\windows\dev\setup.bat``` in your Windows terminal or ```scripts\linux\dev\setup.bat``` in your linux terminal. This needs to be done only once.
+2. Run ```scripts\windows\dev\startup.bat``` in your Windows terminal or ```scripts\linux\dev\startup.sh``` in your linux terminal
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+To run a production build of the react app (*make sure the previous steps have been executed before the following ones are*):
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+1. Run ```scripts\windows\prod\setup.bat``` in your Windows terminal or ```scripts\linux\prod\setup.bat``` in your linux terminal. This needs to be done only once.
+2. Run ```scripts\windows\prod\startup.bat``` in your Windows terminal or ```scripts\linux\prod\startup.bat``` in your linux terminal. This needs to be done only once.
 
-### `npm test`
+Access the application at http://localhost:3000/
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Setup
 
-### `npm run build`
+You will asked to fill the required settings. This can be done by clicking the Settings button in the left panel that will require you to fill in:
+- Your **HuggingFace** read token
+- Your **Neo4j** database settings (can be provided in the input areas or as a file received from Neo4j)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+If you do not already have a Neo4j account, kindly create one (it's free!). 
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+These will be stored locally in your system in the server folder of this project as **settings.json**. All your sessions will be stored in the **prev_msgs** folder in the server folder, as json files.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Usage
 
-### `npm run eject`
+You can prompt the model without any context by leaving the checkbox to the left of the input area unchecked, or use the index by checking the same.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+You can also upload text documents using the button on the top right hand corner, that will be embed and stored in your Neo4j database.

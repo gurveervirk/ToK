@@ -1,0 +1,132 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  height: 100vh;
+  background-color: whitesmoke;
+}
+
+/* code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+} */
+
+.form-control:focus{
+  border-color: black !important;
+  box-shadow: 0 0 0 0.01rem gray !important;
+}
+
+.btn-close{
+  --bs-btn-close-focus-shadow: 0 0 0 0.25rem black;
+}
+
+.nav-link.active {
+  font-weight: bold;
+}
+
+.nav-link:hover {
+  color: black;
+  font-weight: 500;
+}
+
+.nav-link{
+  color: black;
+}
+
+.btn-primary-outline {
+  background-color: transparent;
+}
+
+.input-group-text{
+  background-color: white;
+}
+
+.form-check-input:checked {
+  background-color: black;
+  border-color: gainsboro;
+}
+
+.form-check-input:focus {
+  box-shadow: 0 0 0 .25rem gainsboro;
+}
+
+.tr-container {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 1025; /* Make sure the z-index is higher than other elements */
+}
+
+.modal-backdrop {
+  z-index: 900;
+}
+
+.custom-invalid-feedback{
+  width: 100%;
+  margin-top: .25rem;
+  font-size: .875em;
+  color: #dc3545;
+}
+
+.message-container {
+  margin-top: 1em;
+  height: 100%;
+  max-width: 100%;
+  overflow-y: scroll;
+}
+
+.message {
+  max-width: 90%;
+  width: fit-content;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  word-wrap: break-word;
+  -webkit-transition: all 2s;
+  transition:all 2s;
+}
+
+.user-message {
+  background-color: white;
+  color: black;
+}
+
+.bot-message {
+  background-color: black;
+  color: white;
+  width: 90%;
+}
+
+.is-latest{
+  animation: typing 5s linear;
+}
+
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+@keyframes slideInDown {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.slide-in-down {
+  animation: slideInDown 0.75s ease-out forwards; /* Adjust duration and timing function as needed */
+}
+
+.circular-image {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%; /* This makes the image circular */
+  overflow: hidden; /* This hides any content outside of the circular area */
+}
