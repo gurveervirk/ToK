@@ -3,7 +3,7 @@ import { Tooltip } from 'bootstrap';
 import Markdown from 'markdown-to-jsx';
 import Code from './Code';
 
-function ChatArea({ allSettingsFilled, messages, setMessages, chatStarted, setChatStarted}) {
+function ChatArea({messages, setMessages, chatStarted, setChatStarted}) {
   const [greeting, setGreeting] = useState('');
   const [inputText, setInputText] = useState('');
   const [isSending, setIsSending] = useState(false); // State to manage sending state
@@ -121,13 +121,6 @@ function ChatArea({ allSettingsFilled, messages, setMessages, chatStarted, setCh
   return (
     <div className="d-flex flex-column h-100 px-4 mx-auto" style={{ width: '50em', overflow: 'auto' }}>
       <div className="tr-container">
-      {!allSettingsFilled ?
-        (
-          <div className="alert alert-dark alert-dismissible fade show" role="alert">
-            <i className="fa-solid fa-triangle-exclamation"></i> Please fill in all settings to start a chat
-            <button type="button" className="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-          </div>
-        ) : 
         <div>
         <label htmlFor="file-upload" className="btn btn-outline-dark" data-bs-toggle="tooltip" title="Upload documents">
           { isUploading ? <i className="fa fa-spinner fa-spin"></i> : <i className="fa-solid fa-upload"></i> }
@@ -140,7 +133,7 @@ function ChatArea({ allSettingsFilled, messages, setMessages, chatStarted, setCh
           onChange={handleUpload}
           disabled={isUploading}
         />
-      </div>}
+        </div>
       </div>
       <div className="flex-grow-1 overflow-auto d-flex flex-column justify-content-center align-items-center h-100">
       {messages.length === 0 ? (

@@ -2,10 +2,12 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from tempfile import TemporaryDirectory
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from llama_index.llms.huggingface import HuggingFaceInferenceAPI
-from llama_index.core import Settings, VectorStoreIndex, SimpleDirectoryReader, StorageContext, load_index_from_storage
-from llama_index.core.prompts import PromptTemplate, ChatMessage
+from llama_index.core import Settings, VectorStoreIndex, SimpleDirectoryReader, StorageContext
+from llama_index.core.prompts import ChatMessage
 from llama_index.core.memory import ChatMemoryBuffer
+from llama_index.llms.ollama import Ollama
+from llama_index.vector_stores.neo4jvector import Neo4jVectorStore
+import chromadb
 import json
 import os
 import traceback
@@ -36,6 +38,7 @@ Settings.embed_model = embed_model
 Settings.chunk_size = 1024
 
 llm = None
+neo4j_vector_store = None
 chat_engine = None
 vector_index = None
 storage_context = None
@@ -62,17 +65,16 @@ def save_to_session(data):
         session_file.truncate()
 
 try:
-    llm = HuggingFaceInferenceAPI(
-                model_name="mistralai/Mistral-7B-Instruct-v0.3", token=settings['hf_read_token'], num_output=1024, context_window=8192, generate_kwargs={"temperature": 0.7, "top_k": 50, "top_p": 0.95}, task='TGI'
-            )
+    llm = Ollama(model="mistral:instruct", request_timeout=120.0, base_url="http://localhost:11435")
     Settings.llm = llm
     print("LLM initialized successfully")
 except Exception as e:
     print("Error while initializing HuggingFaceInferenceAPI: ", e)
 
 try:
-    storage_context = StorageContext.from_defaults(persist_dir="storage")
-    vector_index = load_index_from_storage(storage_context, index_id="vector_index")
+    neo4j_vector_store = Neo4jVectorStore(settings['username'], settings['password'], settings['uri'], 1024, hybrid_search=True)
+    vector_index = VectorStoreIndex.from_vector_store(vector_store=neo4j_vector_store)
+    storage_context = StorageContext.from_defaults(vector_store=neo4j_vector_store)
     chat_engine = vector_index.as_chat_engine(chat_mode="condense_plus_context",llm=llm,
     context_prompt=(
         "You are a chatbot, who needs to answer questions, preferably using the provided context"
@@ -84,49 +86,6 @@ try:
 
 except Exception as e:
     print("Vector error: ", e)
-    documents = SimpleDirectoryReader(
-        "./init_data"
-    ).load_data()
-    vector_index = VectorStoreIndex.from_documents(documents)
-    vector_index.set_index_id("vector_index")
-    vector_index.storage_context.persist("./storage")
-    chat_engine = vector_index.as_chat_engine(chat_mode="condense_plus_context",llm=llm,
-    context_prompt=(
-        "You are a chatbot, who needs to answer questions, preferably using the provided context"
-        "Here are the relevant documents for the context:\n"
-        "{context_str}"
-        "\nInstruction: Use the previous chat history, or the context above, to interact and help the user."
-    ), memory=memory, verbose=True)
-    print("Vector store initialized successfully")
-
-@app.route('/api/settings', methods=['GET'])
-def get_settings():
-    return jsonify(settings)
-
-@app.route('/api/settings', methods=['POST'])
-def update_settings():
-    new_settings = request.json
-    try:
-        global chat_engine, llm, vector_index, storage_context, memory
-        llm = HuggingFaceInferenceAPI(
-            model_name="mistralai/Mistral-7B-Instruct-v0.3", token=new_settings['hf_read_token'], num_output=1024, context_window=8192, generate_kwargs={"temperature": 0.7, "top_k": 50, "top_p": 0.95}, task='TGI'
-        )
-        Settings.llm = llm
-        chat_engine = vector_index.as_chat_engine(chat_mode="condense_plus_context",llm=llm,
-        context_prompt=(
-            "You are a chatbot, who needs to answer questions, preferably using the provided context"
-            "Here are the relevant documents for the context:\n"
-            "{context_str}"
-            "\nInstruction: Use the previous chat history, or the context above, to interact and help the user."
-        ), memory=memory, verbose=True)
-    except Exception as e:
-        return jsonify({"error": "Invalid details", "message": str(e)}), 400
-    
-    settings.update(new_settings)
-    with open('settings.json', 'w') as f:
-        json.dump(settings, f)
-    
-    return jsonify({"message": "Settings updated successfully", "settings": settings})
 
 @app.route('/api/query', methods=['POST'])
 def query():
@@ -164,11 +123,8 @@ def query():
         if current_session is None:
             is_new_session = True
             current_session = start_new_session()
-            prompt = PromptTemplate('`' + query + '`' + '\n\n' + 'Generate a short and crisp title pertaining to the above query, in quotes')
-            title_llm = HuggingFaceInferenceAPI(
-                model_name="mistralai/Mistral-7B-Instruct-v0.3", token=settings['hf_read_token'], num_output=64, context_window=8192
-            )
-            title_response = title_llm.predict(prompt).strip()
+            prompt = '`' + query + '`' + '\n\n' + 'Generate a short and crisp title pertaining to the above query, in quotes'
+            title_response = llm.complete(prompt).text.strip()
             start = title_response.find('"') + 1
             end = title_response[start:].find('"')
             title_response = title_response[start:start+end]
@@ -256,8 +212,6 @@ def add_new_documents():
             
             # Put documents into the vector store index
             vector_index = vector_index.from_documents(documents, show_progress=True, storage_context=storage_context)
-            vector_index.set_index_id("vector_index")
-            vector_index.storage_context.persist("./storage")
             chat_engine = vector_index.as_chat_engine(chat_mode="condense_plus_context",llm=llm,
     context_prompt=(
         "You are a chatbot, who needs to answer questions, preferably using the provided context"

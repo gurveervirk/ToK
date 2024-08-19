@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import UseWindowDimensions from './UseWindowDimensions';
 import { Tooltip } from 'bootstrap';
 
-function LeftPanel({ settings, setSettings, isSidebarCollapsed, setChatStarted, setMessages}) {
-  const { hf_read_token } = settings;
+function LeftPanel({isSidebarCollapsed, setChatStarted, setMessages}) {
   const [sessionTitles, setSessionTitles] = useState([]);
   const [selectedSession, setSelectedSession] = useState('');
   const isSmall = UseWindowDimensions();
@@ -55,25 +54,6 @@ function LeftPanel({ settings, setSettings, isSidebarCollapsed, setChatStarted, 
       });
     }
   }, []);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const newSettings = {
-      hf_read_token: hf_read_token
-    };
-    setSettings(newSettings);
-    fetch('http://127.0.0.1:5000/api/settings', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(newSettings)
-    })
-      .then(response => console.log('Settings saved:', response))
-      .catch(error => {
-        console.error('Error saving settings:', error);
-      });
-  };
 
   const handleSessionSelect = (mapping) => {
     fetch('http://127.0.0.1:5000/api/choose_chat_history', {
@@ -155,46 +135,6 @@ function LeftPanel({ settings, setSettings, isSidebarCollapsed, setChatStarted, 
             ) : (
               "No previous sessions found"
             )}
-        </div>
-        <div className="py-3 d-flex justify-content-center align-items-center">
-          <button
-            className={`btn btn-dark d-block ${isSmall ? 'w-75' : 'w-100'}`}
-            data-bs-toggle="modal"
-            data-bs-target="#settingsModal"
-          >
-            <i className="fa fa-cog me-2"></i>Settings
-          </button>
-        </div>
-        <div className="modal fade" id="settingsModal" tabIndex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title" id="settingsModalLabel">Settings</h5>
-                <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div className="modal-body">
-                <form className='was-validated' onSubmit={handleSubmit} noValidate>
-                  <div className="mb-3">
-                    <label htmlFor="hfToken" className="form-label">
-                      HF Read Token
-                    </label>
-                    <input
-                      type="password"
-                      id="hfToken"
-                      className="form-control"
-                      value={hf_read_token}
-                      onChange={(e) => setSettings(prevSettings => ({ ...prevSettings, hf_read_token: e.target.value}))}
-                      required
-                    />
-                  </div>
-                  <div className="text-end">
-                    <button type="submit" className="btn btn-dark" disabled={!settings.hf_read_token} data-bs-dismiss="modal">Save</button>
-                    <button type="button" className="btn btn-secondary ms-2" data-bs-dismiss="modal">Cancel</button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
