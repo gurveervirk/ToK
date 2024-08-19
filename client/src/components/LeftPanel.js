@@ -3,8 +3,7 @@ import UseWindowDimensions from './UseWindowDimensions';
 import { Tooltip } from 'bootstrap';
 
 function LeftPanel({ settings, setSettings, isSidebarCollapsed, setChatStarted, setMessages}) {
-  const { hf_read_token, username, password, uri, database } = settings;
-  const [invalidFile, setInvalidFile] = useState(false);
+  const { hf_read_token } = settings;
   const [sessionTitles, setSessionTitles] = useState([]);
   const [selectedSession, setSelectedSession] = useState('');
   const isSmall = UseWindowDimensions();
@@ -60,10 +59,6 @@ function LeftPanel({ settings, setSettings, isSidebarCollapsed, setChatStarted, 
   const handleSubmit = (e) => {
     e.preventDefault();
     const newSettings = {
-      username: username,
-      password: password,
-      uri: uri,
-      database: database,
       hf_read_token: hf_read_token
     };
     setSettings(newSettings);
@@ -77,33 +72,6 @@ function LeftPanel({ settings, setSettings, isSidebarCollapsed, setChatStarted, 
       .then(response => console.log('Settings saved:', response))
       .catch(error => {
         console.error('Error saving settings:', error);
-      });
-  };
-
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    const formData = new FormData();
-    formData.append('file', file);
-
-    fetch('http://127.0.0.1:5000/api/settings', {
-      method: 'POST',
-      body: formData
-    })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Failed to upload file');
-        }
-        return response.json();
-      })
-      .then(data => {
-        setSettings(data.settings);
-      })
-      .catch(error => {
-        console.error('Error uploading file:', error);
-        setInvalidFile(true);
-        setTimeout(() => {
-          setInvalidFile(false);
-        }, 5000);
       });
   };
 
@@ -219,91 +187,8 @@ function LeftPanel({ settings, setSettings, isSidebarCollapsed, setChatStarted, 
                       required
                     />
                   </div>
-                  <ul className="nav nav-tabs mb-3" id="settingsTabs" role="tablist">
-                    <li className="nav-item" role="presentation">
-                      <button className="nav-link active" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual" type="button" role="tab" aria-controls="manual" aria-selected="true">Manual</button>
-                    </li>
-                    <li className="nav-item" role="presentation">
-                      <button className="nav-link" id="file-tab" data-bs-toggle="tab" data-bs-target="#file" type="button" role="tab" aria-controls="file" aria-selected="false">File</button>
-                    </li>
-                  </ul>
-                  <div className="tab-content" id="settingsTabsContent">
-                    <div className="tab-pane fade show active" id="manual" role="tabpanel" aria-labelledby="manual-tab">
-                      <div className="mb-3">
-                        <label htmlFor="username" className="form-label">Username</label>
-                        <input
-                          type="text"
-                          id="username"
-                          className="form-control"
-                          value={username}
-                          onChange={(e) => setSettings(prevSettings => ({ ...prevSettings, username: e.target.value}))}
-                          required
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label htmlFor="password" className="form-label">Password</label>
-                        <input
-                          type="password"
-                          id="password"
-                          className="form-control"
-                          value={password}
-                          onChange={(e) => setSettings(prevSettings => ({ ...prevSettings, password: e.target.value}))}
-                          required
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label htmlFor="uri" className="form-label">URI</label>
-                        <input
-                          type="password"
-                          id="uri"
-                          className="form-control"
-                          value={uri}
-                          onChange={(e) => setSettings(prevSettings => ({ ...prevSettings, uri: e.target.value}))}
-                          required
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label htmlFor="database" className="form-label">Database</label>
-                        <input
-                          type="text"
-                          id="database"
-                          className="form-control"
-                          value={database}
-                          onChange={(e) => setSettings(prevSettings => ({ ...prevSettings, database: e.target.value}))}
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="tab-pane fade" id="file" role="tabpanel" aria-labelledby="file-tab">
-                      <div className="mb-3">
-                        <label htmlFor="fileInput" className="form-label">Upload File</label>
-                        <input
-                          type="file"
-                          id="fileInput"
-                          className="form-control"
-                          onChange={handleFileUpload} // Handle file upload
-                          required={!settings.username || !settings.password || !settings.uri || !settings.database}
-                        />
-                        {invalidFile ? (
-                          <div className="custom-invalid-feedback">
-                            Provide a valid neo4j file and confirm that your neo4j DB is running.
-                          </div>
-                        ) 
-                        :
-                        ((settings.username && settings.password && settings.uri && settings.database) ?
-                          <div className='valid-feedback'>
-                            All inputs provided!
-                          </div> : 
-                          <div className='custom-invalid-feedback'>
-                            Provide neo4j credentials manually or in a file.
-                          </div>
-                        )
-                        }
-                      </div>
-                    </div>
-                  </div>
                   <div className="text-end">
-                    <button type="submit" className="btn btn-dark" disabled={!settings.username || !settings.password || !settings.uri || !settings.database || !settings.hf_read_token} data-bs-dismiss="modal">Save</button>
+                    <button type="submit" className="btn btn-dark" disabled={!settings.hf_read_token} data-bs-dismiss="modal">Save</button>
                     <button type="button" className="btn btn-secondary ms-2" data-bs-dismiss="modal">Cancel</button>
                   </div>
                 </form>

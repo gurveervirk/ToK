@@ -1,5 +1,4 @@
 llama_index
-llama-index-vector-stores-neo4jvector
 llama-index-llms-huggingface
 llama-index-embeddings-huggingface
 flask

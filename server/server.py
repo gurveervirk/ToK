@@ -1,11 +1,9 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-import tempfile
 from tempfile import TemporaryDirectory
-from llama_index.vector_stores.neo4jvector import Neo4jVectorStore
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.llms.huggingface import HuggingFaceInferenceAPI
-from llama_index.core import Settings, VectorStoreIndex, SimpleDirectoryReader, StorageContext
+from llama_index.core import Settings, VectorStoreIndex, SimpleDirectoryReader, StorageContext, load_index_from_storage
 from llama_index.core.prompts import PromptTemplate, ChatMessage
 from llama_index.core.memory import ChatMemoryBuffer
 import json
@@ -32,16 +30,16 @@ except FileNotFoundError:
         json.dump(settings, f)
 
 create_directory_if_not_exists('prev_msgs')
+create_directory_if_not_exists('storage')
 embed_model = HuggingFaceEmbedding(model_name="mixedbread-ai/mxbai-embed-large-v1", device='cuda')
 Settings.embed_model = embed_model
 Settings.chunk_size = 1024
 
 llm = None
-neo4j_vector_store = None
 chat_engine = None
 vector_index = None
 storage_context = None
-memory = ChatMemoryBuffer.from_defaults(token_limit=7936)
+memory = ChatMemoryBuffer.from_defaults(token_limit=2048)
 
 def get_session_number():
     return len([name for name in os.listdir('prev_msgs') if os.path.isfile(os.path.join('prev_msgs', name))])
@@ -65,7 +63,7 @@ def save_to_session(data):
 
 try:
     llm = HuggingFaceInferenceAPI(
-                model_name="mistralai/Mistral-7B-Instruct-v0.2", token=settings['hf_read_token'], num_output=1024, context_window=8192, generate_kwargs={"temperature": 0.7, "top_k": 50, "top_p": 0.95}, task='TGI'
+                model_name="mistralai/Mistral-7B-Instruct-v0.3", token=settings['hf_read_token'], num_output=1024, context_window=8192, generate_kwargs={"temperature": 0.7, "top_k": 50, "top_p": 0.95}, task='TGI'
             )
     Settings.llm = llm
     print("LLM initialized successfully")
@@ -73,10 +71,9 @@ except Exception as e:
     print("Error while initializing HuggingFaceInferenceAPI: ", e)
 
 try:
-    neo4j_vector_store = Neo4jVectorStore(settings['username'], settings['password'], settings['uri'], 1024, hybrid_search=True)
-    vector_index = VectorStoreIndex.from_vector_store(vector_store=neo4j_vector_store)
-    storage_context = StorageContext.from_defaults(vector_store=neo4j_vector_store)
-    chat_engine = vector_index.as_chat_engine(chat_mode="condense_plus_context",llm=llm,
+    storage_context = StorageContext.from_defaults(persist_dir="storage")
+    vector_index = load_index_from_storage(storage_context, index_id="vector_index")
+    chat_engine = vector_index.as_chat_engine(chat_mode="context",llm=llm,
     context_prompt=(
         "You are a chatbot, who needs to answer questions, preferably using the provided context"
         "Here are the relevant documents for the context:\n"
@@ -84,22 +81,23 @@ try:
         "\nInstruction: Use the previous chat history, or the context above, to interact and help the user."
     ), memory=memory, verbose=True)
     print("Vector store initialized successfully")
+
 except Exception as e:
     print("Vector error: ", e)
-
-def process_creds_file(file_path):
-    needed = ["uri", "username", "password"]
-    new_settings = {}
-    i = 0
-    with open(file_path, 'r') as file:
-        lines = file.readlines()[1:4]  # Read lines and then slice
-        for line in lines:
-            if line.strip() and '=' in line:
-                _, value = line.strip().split('=')
-                new_settings[needed[i]] = value
-                i += 1
-    new_settings['database'] = 'neo4j'
-    return new_settings
+    documents = SimpleDirectoryReader(
+        "./init_data"
+    ).load_data()
+    vector_index = VectorStoreIndex.from_documents(documents)
+    vector_index.set_index_id("vector_index")
+    vector_index.storage_context.persist("./storage")
+    chat_engine = vector_index.as_chat_engine(chat_mode="context",llm=llm,
+    context_prompt=(
+        "You are a chatbot, who needs to answer questions, preferably using the provided context"
+        "Here are the relevant documents for the context:\n"
+        "{context_str}"
+        "\nInstruction: Use the previous chat history, or the context above, to interact and help the user."
+    ), memory=memory, verbose=True)
+    print("Vector store initialized successfully")
 
 @app.route('/api/settings', methods=['GET'])
 def get_settings():
@@ -107,81 +105,33 @@ def get_settings():
 
 @app.route('/api/settings', methods=['POST'])
 def update_settings():
-    if 'file' in request.files:
-        file = request.files['file']
-        # Save the uploaded file temporarily
-        temp_file_path = tempfile.NamedTemporaryFile(delete=False).name
-        file.save(temp_file_path)
-        # Process the file to extract credentials
-        new_settings = process_creds_file(temp_file_path)
-
-        # Check if all required fields are present
-        for key in ["username", "password", "uri", "database"]:
-            if new_settings.get(key) is None:
-                return jsonify({"error": "Invalid file"}), 400
-        
-        try:
-            global neo4j_vector_store
-            global storage_context
-            temp_vector_store = Neo4jVectorStore(new_settings['username'], new_settings['password'], new_settings['uri'], 1024, hybrid_search=True)
-            neo4j_vector_store = temp_vector_store
-            storage_context = StorageContext.from_defaults(vector_store=neo4j_vector_store)
-            if llm is not None:
-                global vector_index
-                vector_index = VectorStoreIndex.from_vector_store(vector_store=neo4j_vector_store)
-                storage_context = StorageContext.from_defaults(vector_store=neo4j_vector_store)
-                global chat_engine
-                chat_engine = vector_index.as_chat_engine(chat_mode="condense_plus_context",llm=llm,
-    context_prompt=(
-        "You are a chatbot, who needs to answer questions, preferably using the provided context"
-        "Here are the relevant documents for the context:\n"
-        "{context_str}"
-        "\nInstruction: Use the previous chat history, or the context above, to interact and help the user."
-    ), memory=memory, verbose=True)
-        except Exception as e:
-            return jsonify({"error": "Invalid file", "message": str(e)}), 400
-        
-        # Update settings dictionary and write it to settings.json
-        settings.update(new_settings)
-        with open('settings.json', 'w') as f:
-            json.dump(settings, f)
-        
-        return jsonify({"message": "Settings updated successfully", "settings": settings})
+    new_settings = request.json
+    try:
+        global chat_engine, llm, vector_index, storage_context, memory
+        llm = HuggingFaceInferenceAPI(
+            model_name="mistralai/Mistral-7B-Instruct-v0.3", token=new_settings['hf_read_token'], num_output=1024, context_window=8192, generate_kwargs={"temperature": 0.7, "top_k": 50, "top_p": 0.95}, task='TGI'
+        )
+        Settings.llm = llm
+        chat_engine = vector_index.as_chat_engine(chat_mode="context",llm=llm,
+        context_prompt=(
+            "You are a chatbot, who needs to answer questions, preferably using the provided context"
+            "Here are the relevant documents for the context:\n"
+            "{context_str}"
+            "\nInstruction: Use the previous chat history, or the context above, to interact and help the user."
+        ), memory=memory, verbose=True)
+    except Exception as e:
+        return jsonify({"error": "Invalid details", "message": str(e)}), 400
     
-    else:
-        new_settings = request.json
-        try:
-            llm = HuggingFaceInferenceAPI(
-                model_name="mistralai/Mistral-7B-Instruct-v0.2", token=settings['hf_read_token'], num_output=1024, context_window=8192, generate_kwargs={"temperature": 0.7, "top_k": 50, "top_p": 0.95}, task='TGI'
-            )
-            Settings.llm = llm
-
-            temp_vector_store = Neo4jVectorStore(new_settings['username'], new_settings['password'], new_settings['uri'], 1024, hybrid_search=True)
-            neo4j_vector_store = temp_vector_store
-            storage_context = StorageContext.from_defaults(vector_store=neo4j_vector_store)
-            vector_index = VectorStoreIndex.from_vector_store(vector_store=neo4j_vector_store)
-            chat_engine = vector_index.as_chat_engine(chat_mode="condense_plus_context",llm=llm,
-    context_prompt=(
-        "You are a chatbot, who needs to answer questions, preferably using the provided context"
-        "Here are the relevant documents for the context:\n"
-        "{context_str}"
-        "\nInstruction: Use the previous chat history, or the context above, to interact and help the user."
-    ), memory=memory, verbose=True)
-        except Exception as e:
-            return jsonify({"error": "Invalid details", "message": str(e)}), 400
-        
-        # Assuming the data contains all the required fields
-        settings.update(new_settings)
-        # Update settings dictionary and write it to settings.json
-        with open('settings.json', 'w') as f:
-            json.dump(settings, f)
-        
-        return jsonify({"message": "Settings updated successfully", "settings": settings})
+    settings.update(new_settings)
+    with open('settings.json', 'w') as f:
+        json.dump(settings, f)
+    
+    return jsonify({"message": "Settings updated successfully", "settings": settings})
 
 @app.route('/api/query', methods=['POST'])
 def query():
     try:
-        global current_session
+        global current_session, llm
         data = request.json
         query = data['query']
         use_chat_engine = data['useQueryEngine']
@@ -191,7 +141,6 @@ def query():
 
         if query is None:
             return jsonify({"error": "Query parameter missing"}), 400
-        
         
         if use_chat_engine:
             if chat_engine is None:
@@ -215,22 +164,14 @@ def query():
         if current_session is None:
             is_new_session = True
             current_session = start_new_session()
-            prompt = PromptTemplate('You are a adherent, smart assistant that answers questions to the point without explanation. You provide only a single, short and crisp title, of maximum 4 words for input queries and provide only the title for the query, without any extra content or answer or explanation:' + query)
-            title_response = llm.predict(prompt).strip()
-            if title_response[:5] == "Title":
-                title_response = title_response[5:]
-                i = 0
-                extraExists = False
-                while i < (len(title_response)):
-                    if title_response[i] in [':', '=', ' ']:
-                        extraExists = True
-                        i += 1
-                        continue
-                    break
-                if extraExists:
-                    title_response = title_response[i:]
-                if title_response[-1] == '.':
-                    title_response = title_response[:-1]
+            prompt = PromptTemplate('`' + query + '`' + '\n\n' + 'Generate a short and crisp title pertaining to the above query, in quotes')
+            title_llm = HuggingFaceInferenceAPI(
+                model_name="mistralai/Mistral-7B-Instruct-v0.3", token=settings['hf_read_token'], num_output=64, context_window=8192
+            )
+            title_response = title_llm.predict(prompt).strip()
+            start = title_response.find('"') + 1
+            end = title_response[start:].find('"')
+            title_response = title_response[start:start+end]
             title = {"title": title_response}
             save_to_session(title)
         
@@ -275,13 +216,13 @@ def choose_chat_history():
         return jsonify({"error": "Session not found"}), 404
     
     global memory
-    memory = ChatMemoryBuffer.from_defaults(token_limit=7936)
+    memory = ChatMemoryBuffer.from_defaults(token_limit=2048)
     for data in session_file[1:]:
         memory.put(ChatMessage.from_str(content=data['query']))
         memory.put(ChatMessage.from_str(content=data['response'], role='assistant'))
 
     global chat_engine
-    chat_engine = vector_index.as_chat_engine(chat_mode="condense_plus_context",llm=llm,
+    chat_engine = vector_index.as_chat_engine(chat_mode="context",llm=llm,
     context_prompt=(
         "You are a chatbot, who needs to answer questions, preferably using the provided context"
         "Here are the relevant documents for the context:\n"
@@ -315,7 +256,9 @@ def add_new_documents():
             
             # Put documents into the vector store index
             vector_index = vector_index.from_documents(documents, show_progress=True, storage_context=storage_context)
-            chat_engine = vector_index.as_chat_engine(chat_mode="condense_plus_context",llm=llm,
+            vector_index.set_index_id("vector_index")
+            vector_index.storage_context.persist("./storage")
+            chat_engine = vector_index.as_chat_engine(chat_mode="context",llm=llm,
     context_prompt=(
         "You are a chatbot, who needs to answer questions, preferably using the provided context"
         "Here are the relevant documents for the context:\n"
@@ -333,10 +276,10 @@ def new_chat():
     current_session = None
 
     global memory
-    memory = ChatMemoryBuffer.from_defaults(token_limit=7936)
+    memory = ChatMemoryBuffer.from_defaults(token_limit=2048)
 
     global chat_engine
-    chat_engine = vector_index.as_chat_engine(chat_mode="condense_plus_context",llm=llm,
+    chat_engine = vector_index.as_chat_engine(chat_mode="context",llm=llm,
     context_prompt=(
         "You are a chatbot, who needs to answer questions, preferably using the provided context"
         "Here are the relevant documents for the context:\n"
