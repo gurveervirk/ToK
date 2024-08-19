@@ -73,7 +73,7 @@ except Exception as e:
 try:
     storage_context = StorageContext.from_defaults(persist_dir="storage")
     vector_index = load_index_from_storage(storage_context, index_id="vector_index")
-    chat_engine = vector_index.as_chat_engine(chat_mode="context",llm=llm,
+    chat_engine = vector_index.as_chat_engine(chat_mode="condense_plus_context",llm=llm,
     context_prompt=(
         "You are a chatbot, who needs to answer questions, preferably using the provided context"
         "Here are the relevant documents for the context:\n"
@@ -90,7 +90,7 @@ except Exception as e:
     vector_index = VectorStoreIndex.from_documents(documents)
     vector_index.set_index_id("vector_index")
     vector_index.storage_context.persist("./storage")
-    chat_engine = vector_index.as_chat_engine(chat_mode="context",llm=llm,
+    chat_engine = vector_index.as_chat_engine(chat_mode="condense_plus_context",llm=llm,
     context_prompt=(
         "You are a chatbot, who needs to answer questions, preferably using the provided context"
         "Here are the relevant documents for the context:\n"
@@ -112,7 +112,7 @@ def update_settings():
             model_name="mistralai/Mistral-7B-Instruct-v0.3", token=new_settings['hf_read_token'], num_output=1024, context_window=8192, generate_kwargs={"temperature": 0.7, "top_k": 50, "top_p": 0.95}, task='TGI'
         )
         Settings.llm = llm
-        chat_engine = vector_index.as_chat_engine(chat_mode="context",llm=llm,
+        chat_engine = vector_index.as_chat_engine(chat_mode="condense_plus_context",llm=llm,
         context_prompt=(
             "You are a chatbot, who needs to answer questions, preferably using the provided context"
             "Here are the relevant documents for the context:\n"
@@ -222,7 +222,7 @@ def choose_chat_history():
         memory.put(ChatMessage.from_str(content=data['response'], role='assistant'))
 
     global chat_engine
-    chat_engine = vector_index.as_chat_engine(chat_mode="context",llm=llm,
+    chat_engine = vector_index.as_chat_engine(chat_mode="condense_plus_context",llm=llm,
     context_prompt=(
         "You are a chatbot, who needs to answer questions, preferably using the provided context"
         "Here are the relevant documents for the context:\n"
@@ -258,7 +258,7 @@ def add_new_documents():
             vector_index = vector_index.from_documents(documents, show_progress=True, storage_context=storage_context)
             vector_index.set_index_id("vector_index")
             vector_index.storage_context.persist("./storage")
-            chat_engine = vector_index.as_chat_engine(chat_mode="context",llm=llm,
+            chat_engine = vector_index.as_chat_engine(chat_mode="condense_plus_context",llm=llm,
     context_prompt=(
         "You are a chatbot, who needs to answer questions, preferably using the provided context"
         "Here are the relevant documents for the context:\n"
@@ -279,7 +279,7 @@ def new_chat():
     memory = ChatMemoryBuffer.from_defaults(token_limit=2048)
 
     global chat_engine
-    chat_engine = vector_index.as_chat_engine(chat_mode="context",llm=llm,
+    chat_engine = vector_index.as_chat_engine(chat_mode="condense_plus_context",llm=llm,
     context_prompt=(
         "You are a chatbot, who needs to answer questions, preferably using the provided context"
         "Here are the relevant documents for the context:\n"
