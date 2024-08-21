@@ -1,7 +1,7 @@
 # Trove Of Knowledge
 
 <div align="center">
-  <img width="640" alt="gurveervirk/ToK" src="https://github.com/gurveervirk/ToK/blob/main/app/public/tok.jpg">
+  <img height="400" width="400" alt="gurveervirk/ToK" src="https://github.com/gurveervirk/ToK/blob/main/app/public/tok.jpg">
 </div>
 
 This project is a *fully local*, *high quality*, *ChatGPT-esque*, *extensible RAG application*, that makes use of AI models and indices to query documents and retrieve better-informed responses from the models. It allows you to upload your documents that can be used to answer any corresponding queries. It automatically stores your chats for future usage.
