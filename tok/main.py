@@ -13,8 +13,8 @@ from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.core import Settings, VectorStoreIndex, SimpleDirectoryReader, StorageContext
 import json
 import traceback
-import subprocess
 import time
+import subprocess
 
 app = Flask(__name__, static_folder='web/build', static_url_path='/')
 ollama_process = None
@@ -26,12 +26,12 @@ def start_services():
         # Start Ollama
         ollama_process = subprocess.Popen(["ollama", "serve"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         print("Starting Ollama...")
-        time.sleep(1)  
         print("Ollama started successfully")
+
+        time.sleep(1)
 
         # Start Neo4j
         os.system("neo4j start")
-        time.sleep(2)
 
     except Exception as e:
         print("Error starting services: ", e)
@@ -284,13 +284,19 @@ def start_flask_app():
 
 def cleanup():
     global ollama_process
+    
+    # Terminate the ollama process if it exists
     if ollama_process:
         ollama_process.terminate()
-        os.system("powershell -Command \"Get-Process | Where-Object {$_.ProcessName -like '*ollama*'} | Stop-Process\"")
+    
+    # Stop Neo4j service (assuming this is required on all systems)
     os.system("neo4j stop")
 
 if __name__ == '__main__':
-    ui = FlaskUI(app = app, server="flask", width=1280, height=720, port=5000, on_shutdown=cleanup) # Change width and height as needed
+    chrome_path = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+    browser_path = chrome_path if os.path.exists(chrome_path) else None
+
+    ui = FlaskUI(app=app, server="flask", width=1280, height=720, port=5000, on_shutdown=cleanup, browser_path=browser_path) # Change width and height as needed
     try:
         create_directory_if_not_exists('prev_msgs')
         start_services()
