@@ -114,7 +114,7 @@ function LeftPanel({isSidebarCollapsed, setChatStarted, setMessages}) {
               .catch(error => console.error('Error fetching session titles:', error));
             }}
           >
-            <i className="fa fa-comments me-2"></i>New Chat
+            <i class="bi bi-chat-text"></i> New Chat
           </button>
         </div>
         <div className="py-3 flex-grow-1 d-flex flex-column justify-content-center align-items-center">

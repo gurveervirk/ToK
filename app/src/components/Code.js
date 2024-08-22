@@ -16,7 +16,7 @@ const Code = ({ children, language }) => {
     <div className="code">
       <CopyToClipboard text={children} onCopy={() => setCopied(true)}>
         <button>
-          {copied ? <i className="fa-solid fa-paste"></i> : <i className="fa-solid fa-copy"></i>}
+          {copied ? <i className="bi bi-clipboard-check"></i> : <i className="bi bi-clipboard"></i>}
         </button>
       </CopyToClipboard>
       <SyntaxHighlighter

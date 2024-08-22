@@ -1,1 +1,1 @@
-{"hf_read_token": "", "username": "", "password": "", "uri": "bolt://localhost:7687"}
+{"username": "neo4j", "password": "default_password", "uri": "bolt://localhost:7687"}

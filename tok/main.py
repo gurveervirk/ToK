@@ -1,18 +1,21 @@
+import os
+os.environ["TIKTOKEN_CACHE_DIR"] = 'tiktoken_cache'
+
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from flaskwebgui import FlaskUI
 from tempfile import TemporaryDirectory
+from llama_index.llms.ollama import Ollama
 from llama_index.embeddings.fastembed import FastEmbedEmbedding
-from llama_index.core import Settings, VectorStoreIndex, SimpleDirectoryReader, StorageContext
+from llama_index.vector_stores.neo4jvector import Neo4jVectorStore
 from llama_index.core.prompts import ChatMessage
 from llama_index.core.memory import ChatMemoryBuffer
-from llama_index.llms.ollama import Ollama
-from llama_index.vector_stores.neo4jvector import Neo4jVectorStore
+from llama_index.core import Settings, VectorStoreIndex, SimpleDirectoryReader, StorageContext
 import json
-import os
 import traceback
 import subprocess
 import time
+
 
 app = Flask(__name__, static_folder='web/build', static_url_path='/')
 ollama_process = None
@@ -68,7 +71,6 @@ def initialize_globals():
         Settings.embed_model = embed_model
         llm = Ollama(model="mistral:instruct", request_timeout=120.0, base_url="http://localhost:11434")
         Settings.llm = llm
-        Settings.chunk_size = 1024
 
         # Initialize LLM
         print("LLM initialized successfully")
@@ -103,14 +105,13 @@ def start_new_session():
         json.dump([], session_file)
     return session_filename
 
-def save_to_session(data):
-    if current_session:
-        with open(current_session, "r+") as session_file:
-            session_data = json.load(session_file)
-            session_data.append(data)
-            session_file.seek(0)
-            json.dump(session_data, session_file)
-            session_file.truncate()
+def save_to_session(session, data):
+    with open(session, "r+") as session_file:
+        session_data = json.load(session_file)
+        session_data.append(data)
+        session_file.seek(0)
+        json.dump(session_data, session_file)
+        session_file.truncate()
 
 # Global variable for current session
 current_session = None
@@ -119,6 +120,7 @@ current_session = None
 def query():
     try:
         global current_session
+        cur_session = current_session
         data = request.json
         query = data.get('query')
         use_chat_engine = data.get('useQueryEngine', False)
@@ -142,15 +144,16 @@ def query():
         data_to_save = {"query": query, "response": response}
         is_new_session = False
 
-        if current_session is None:
+        if cur_session is None:
             is_new_session = True
             current_session = start_new_session()
+            cur_session = current_session
             prompt = f'`{query}`\n\nGenerate a short and crisp title pertaining to the above query, in quotes'
             title_response = llm.complete(prompt).text.strip()
             title = {"title": title_response.split('"')[1]}
-            save_to_session(title)
+            save_to_session(cur_session, title)
 
-        save_to_session(data_to_save)
+        save_to_session(cur_session, data_to_save)
         return jsonify({"response": response, "is_new_session": is_new_session})
         
     except Exception as e:

@@ -27,11 +27,11 @@ function App() {
               data-bs-toggle={isSmall ? "offcanvas" : ""}
               data-bs-target={isSmall ? "#sidebar" : ""}
             >
-            { isSmall ? <i className="fa-solid fa-ellipsis-vertical"></i> :
+            { isSmall ? <i className="bi bi-three-dots-vertical"></i> :
             isSidebarCollapsed ? (
-              <i className="fa fa-chevron-right"></i>
+              <i className="bi bi-chevron-compact-right"></i>
             ) : (
-              <i className="fa fa-chevron-left"></i>
+              <i className="bi bi-chevron-compact-left"></i>
             )}
           </button>
           <ChatArea messages={messages} setMessages={setMessages} chatStarted={chatStarted} setChatStarted={setChatStarted}/>

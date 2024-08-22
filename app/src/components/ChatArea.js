@@ -123,7 +123,7 @@ function ChatArea({messages, setMessages, chatStarted, setChatStarted}) {
       <div className="tr-container">
         <div>
         <label htmlFor="file-upload" className="btn btn-outline-dark" data-bs-toggle="tooltip" title="Upload documents">
-          { isUploading ? <i className="fa fa-spinner fa-spin"></i> : <i className="fa-solid fa-upload"></i> }
+          { isUploading ? <i className="bi bi-pause-fill"></i> : <i className="bi bi-upload"></i> }
         </label>
         <input
           type="file"
@@ -138,7 +138,7 @@ function ChatArea({messages, setMessages, chatStarted, setChatStarted}) {
       <div className="flex-grow-1 overflow-auto d-flex flex-column justify-content-center align-items-center h-100">
       {messages.length === 0 ? (
           <div className="text-center">
-            <p className="fs-2 fw-bold"><img className='img-fluid circular-image mb-2' src="ai_chat_logo.jpg" alt="Logo" /><br/>{greeting} How can I help you?</p>
+            <p className="fs-2 fw-bold"><img className='img-fluid circular-image mb-2' src="tok.jpg" alt="Logo" /><br/>{greeting} How can I help you?</p>
           </div>
         ) : (
           <div className="message-container">
@@ -214,9 +214,9 @@ function ChatArea({messages, setMessages, chatStarted, setChatStarted}) {
             disabled={inputText.trim() === '' || isSending} // Disable button during sending or if input is empty
           >
             {isSending ? (
-              <i className="fa fa-spinner fa-spin"></i> // Change icon to spinner when sending
+              <i className="bi bi-pause-fill"></i>
             ) : (
-              <i className="fa fa-arrow-up"></i>
+              <i className="bi bi-arrow-up"></i>
             )}
           </button>
         </div>

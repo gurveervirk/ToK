@@ -6,3 +6,6 @@ sub_optimal.txt
 /prev_msgs
 /tok/installer_script.iss
 /tok/TokInstaller.exe
+/tok/venv
+/tok/web/build
+/tok/build
