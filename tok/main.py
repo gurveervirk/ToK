@@ -16,12 +16,12 @@ import traceback
 import subprocess
 import time
 
-
 app = Flask(__name__, static_folder='web/build', static_url_path='/')
 ollama_process = None
 CORS(app)
 
 def start_services():
+    global ollama_process
     try:
         # Start Ollama
         ollama_process = subprocess.Popen(["ollama", "serve"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -31,11 +31,7 @@ def start_services():
 
         # Start Neo4j
         os.system("neo4j start")
-        print("Starting Neo4j...")
         time.sleep(2)
-        print("Neo4j started successfully")
-        
-        return ollama_process
 
     except Exception as e:
         print("Error starting services: ", e)
@@ -113,7 +109,6 @@ def save_to_session(session, data):
         json.dump(session_data, session_file)
         session_file.truncate()
 
-# Global variable for current session
 current_session = None
 
 @app.route('/api/query', methods=['POST'])
@@ -124,38 +119,57 @@ def query():
         data = request.json
         query = data.get('query')
         use_chat_engine = data.get('useQueryEngine', False)
-
+        bot_message = ""
         if query is None:
             return jsonify({"error": "Query parameter missing"}), 400
-        
+
+        # Start the appropriate engine
         if use_chat_engine:
             if chat_engine is None:
                 return jsonify({"error": "Query engine not initialized"}), 500
-
             memory.put(ChatMessage.from_str(content=query))
-            response = chat_engine.chat(query).response
+            response_generator = chat_engine.stream_chat(query).response_gen
         else:
             if llm is None:
                 return jsonify({"error": "LLM not initialized"}), 500
-
             memory.put(ChatMessage.from_str(content=query))
-            response = llm.chat(memory.get_all()).message.content
+            response_generator = llm.stream_chat(memory.get_all())
 
-        data_to_save = {"query": query, "response": response}
-        is_new_session = False
+        def generate_response():
+            nonlocal bot_message
+            nonlocal cur_session
+            global current_session
+            nonlocal use_chat_engine
 
-        if cur_session is None:
-            is_new_session = True
-            current_session = start_new_session()
-            cur_session = current_session
-            prompt = f'`{query}`\n\nGenerate a short and crisp title pertaining to the above query, in quotes'
-            title_response = llm.complete(prompt).text.strip()
-            title = {"title": title_response.split('"')[1]}
-            save_to_session(cur_session, title)
+            try:
+                for res in response_generator:
+                    if not use_chat_engine: 
+                        res = res.delta
+                    yield res
+                    bot_message += res
+                # Store the complete message
+                data_to_save = {"query": query, "response": bot_message}
 
-        save_to_session(cur_session, data_to_save)
-        return jsonify({"response": response, "is_new_session": is_new_session})
-        
+                if cur_session is None:
+                    current_session = start_new_session()
+                    cur_session = current_session
+                    # Generate title for the session
+                    prompt = f'`{query}`\n\nGenerate a short and crisp title pertaining to the above query, in quotes'
+                    title_response = llm.complete(prompt).text.strip()
+                    title = {"title": title_response.split('"')[1]}
+                    save_to_session(cur_session, title)
+
+                if not use_chat_engine:
+                    memory.put(ChatMessage.from_str(content=bot_message, role='assistant'))
+
+                save_to_session(cur_session, data_to_save)
+
+            except Exception as e:
+                print(f"Error streaming response: {e}")
+                yield "[ERROR] Something went wrong. Please try again later."
+
+        return app.response_class(generate_response(), mimetype='text/plain')
+
     except Exception as e:
         print(e)
         traceback.print_exc()
@@ -269,19 +283,20 @@ def start_flask_app():
     ui.run()
 
 def cleanup():
+    global ollama_process
     if ollama_process:
         ollama_process.terminate()
+        os.system("powershell -Command \"Get-Process | Where-Object {$_.ProcessName -like '*ollama*'} | Stop-Process\"")
     os.system("neo4j stop")
 
 if __name__ == '__main__':
-    ui = FlaskUI(app = app, server="flask", width=500, height=500, port=5000, on_shutdown=cleanup) # Change width and height as needed
+    ui = FlaskUI(app = app, server="flask", width=1280, height=720, port=5000, on_shutdown=cleanup) # Change width and height as needed
     try:
         create_directory_if_not_exists('prev_msgs')
-        ollama_process = start_services()
+        start_services()
         initialize_globals()
         start_flask_app()
         
     finally:
-        # Terminate the services when Eel window is closed
         ollama_process.terminate()
         os.system("neo4j stop")

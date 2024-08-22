@@ -80,7 +80,7 @@ body {
 
 .message {
   max-width: 95%;
-  width: fit-content;
+  width: max-content;
   margin-bottom: 10px;
   padding: 10px;
   border-radius: 10px;

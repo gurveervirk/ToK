@@ -44,44 +44,72 @@ function ChatArea({messages, setMessages, chatStarted, setChatStarted}) {
 
     setIsSending(true); // Start sending state
     const newMessage = {
-      id: messages.length + 1,
-      sender: 'user',
-      text: inputText.trim(),
+        id: messages.length + 1,
+        sender: 'user',
+        text: inputText.trim(),
     };
 
+    setMessages([...messages, newMessage]);
+
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/query', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query: inputText.trim(), useQueryEngine: useQueryEngine }),
-      });
+        const response = await fetch('http://127.0.0.1:5000/api/query', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ query: inputText.trim(), useQueryEngine: useQueryEngine }),
+        });
 
-      if (!response.ok) {
-        throw new Error('Failed to query the engine');
-      }
+        if (!response.ok) {
+            throw new Error('Failed to query the engine');
+        }
 
-      const data = await response.json();
-      const botMessage = {
-        id: messages.length + 2,
-        sender: 'bot',
-        text: data.response,
-      };
+        // Process streaming response
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let botMessage = '';
 
-      setMessages([...messages, newMessage, botMessage]);
-      setIsSending(false); // End sending state
-      setChatStarted(true); // Set chat started state
-      // // Update messages after a delay to simulate real-time conversation
-      // setTimeout(() => {
-        
-      // }, 1000); // Simulating delay
+        // Create a new bot message and add it to the messages array
+        const botMessageId = messages.length + 2;
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            {
+                id: botMessageId,
+                sender: 'bot',
+                text: '', // Initialize with an empty message
+            },
+        ]);
+
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+
+            // Decode the chunk and append to botMessage
+            const chunk = decoder.decode(value, { stream: true });
+            botMessage += chunk;
+
+            // Update bot message progressively
+            setMessages((prevMessages) =>
+                prevMessages.map((msg) =>
+                    msg.id === botMessageId
+                        ? { ...msg, text: botMessage }
+                        : msg
+                )
+            );
+        }
+
+        // Once complete, update the state as required
+        setIsSending(false); // End sending state
+        setChatStarted(true); // Set chat started state
+
     } catch (error) {
-      console.error('Error querying the engine:', error);
+        console.error('Error querying the engine:', error);
+        setIsSending(false); // End sending state on error
     }
 
     setInputText('');
   };
+
 
   // Prompts related to planning and creating
   const prompts = [
