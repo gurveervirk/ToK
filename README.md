@@ -1,7 +1,7 @@
 # Trove Of Knowledge
 
 <div align="center">
-  <img width="640" alt="Gurveer05/moon-crater-boulder-detection-yolov5" src="https://github.com/gurveervirk/ToK/blob/main/app/public/tok.jpg">
+  <img height="400" width="400" alt="gurveervirk/ToK" src="https://github.com/gurveervirk/ToK/blob/main/app/public/tok.jpg">
 </div>
 
 This project is a *fully local*, *high quality*, *ChatGPT-esque*, *extensible RAG application*, that makes use of AI models and indices to query documents and retrieve better-informed responses from the models. It allows you to upload your documents that can be used to answer any corresponding queries. It automatically stores your chats for future usage.
@@ -14,7 +14,7 @@ This app has two dependencies that need to be installed separately:
 
 Once both are installed and setup using their installers, set the **neo4j bin path** in **PATH** in environmental variables, so that it can be accessed by our app. 
 
-bin path ex: installation\path\.Neo4jDesktop\relate-data\dbmss\your-current-dbms\bin
+bin path ex: \path\to\user\.Neo4jDesktop\relate-data\dbmss\your-current-dbms\bin
 
 Run ```neo4j windows-service install``` in command prompt/powershell to activate neo4j cli.
 
