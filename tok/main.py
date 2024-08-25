@@ -4,16 +4,17 @@ os.environ["TIKTOKEN_CACHE_DIR"] = 'tiktoken_cache'
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from flaskwebgui import FlaskUI
-from tempfile import TemporaryDirectory
 from llama_index.llms.ollama import Ollama
 from llama_index.embeddings.fastembed import FastEmbedEmbedding
 from llama_index.vector_stores.neo4jvector import Neo4jVectorStore
 from llama_index.core.prompts import ChatMessage
 from llama_index.core.memory import ChatMemoryBuffer
-from llama_index.core import Settings, VectorStoreIndex, SimpleDirectoryReader, StorageContext
+from llama_index.core import Settings, VectorStoreIndex, StorageContext, Document
+import ollama
 import json
 import traceback
 import time
+from tqdm import tqdm
 import subprocess
 
 app = Flask(__name__, static_folder='web/build', static_url_path='/')
@@ -57,15 +58,17 @@ def load_settings():
 
 # Initialize global variables
 def initialize_globals():
-    global llm, neo4j_vector_store, vector_index, storage_context, chat_engine, memory
+    global llm, neo4j_vector_store, vector_index, storage_context, chat_engine, memory, models, current_model
 
     try:
         settings = load_settings()
+        models = [model["name"] for model in ollama.list()['models']]
+        current_model = "mistral:instruct"
 
         # Initialize the embed model
         embed_model = FastEmbedEmbedding(model_name="mixedbread-ai/mxbai-embed-large-v1")
         Settings.embed_model = embed_model
-        llm = Ollama(model="mistral:instruct", request_timeout=120.0, base_url="http://localhost:11434")
+        llm = Ollama(model=current_model, request_timeout=120.0, base_url="http://localhost:11434")
         Settings.llm = llm
 
         # Initialize LLM
@@ -227,31 +230,55 @@ def choose_chat_history():
 def add_new_documents():
     print('Adding new documents')
     try:
-        # Create a temporary directory to store files
-        with TemporaryDirectory() as temp_folder:
-            if 'files' not in request.files:
-                return jsonify({"error": "No files provided"}), 400
-            
-            files = request.files.getlist('files')
-            for file in files:
-                file_path = os.path.join(temp_folder, file.filename)
-                file.save(file_path)
-            
-            # Read documents from the temporary directory
-            documents = SimpleDirectoryReader(temp_folder).load_data()
-            
-            global vector_index
-            global chat_engine
-            vector_index = vector_index.from_documents(documents, show_progress=True, storage_context=storage_context)
-            chat_engine = vector_index.as_chat_engine(chat_mode="condense_plus_context", llm=llm,
-                context_prompt=(
-                    "You are a chatbot, who needs to answer questions, preferably using the provided context"
-                    "Here are the relevant documents for the context:\n"
-                    "{context_str}"
-                    "\nInstruction: Use the previous chat history, or the context above, to interact and help the user."
-                ), memory=memory, verbose=True
-            )
-            return jsonify({"success": "Documents added successfully"}), 200
+        # Retrieve the form data
+        if 'metadata' not in request.form or 'files' not in request.files:
+            return jsonify({"error": "Missing files or metadata in form data"}), 400
+
+        files = request.files.getlist('files')
+        metadata = request.form.get('metadata')
+
+        if not files:
+            return jsonify({"error": "No files provided"}), 400
+
+        metadata = json.loads(metadata)
+        
+        # Create a list to hold documents
+        documents = []
+
+        # Convert metadata from list of dicts to a single dict
+        meta = {m["key"]: m["value"] for m in metadata}
+
+        for file in files:
+            # Load each file and associate it with the provided metadata
+            content = file.read().decode('utf-8')
+            doc = Document(text=content, metadata=meta)
+            documents.append(doc)
+
+        if not documents:
+            return jsonify({"error": "No valid documents found"}), 400
+
+        # Update the vector index with the new documents
+        global vector_index
+        global chat_engine
+        
+        vector_index = vector_index.from_documents(documents, show_progress=True, storage_context=storage_context)
+        
+        # Update the chat engine to use the new documents
+        chat_engine = vector_index.as_chat_engine(
+            chat_mode="condense_plus_context",
+            llm=llm,
+            context_prompt=(
+                "You are a chatbot, who needs to answer questions, preferably using the provided context. "
+                "Here are the relevant documents for the context:\n"
+                "{context_str}"
+                "\nInstruction: Use the previous chat history, or the context above, to interact and help the user."
+            ),
+            memory=memory,
+            verbose=True
+        )
+
+        return jsonify({"success": "Documents added successfully"}), 200
+
     except Exception as e:
         print(e)
         traceback.print_exc()
@@ -273,6 +300,104 @@ def new_chat():
         ), memory=memory, verbose=True
     )
     return jsonify({"message": "New chat session started"})
+
+@app.route('/api/list_models', methods=['GET'])
+def list_models():
+    global models
+    global current_model
+    try:
+        return jsonify({"models": models, "selectedModel": current_model})
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/select_model', methods=['POST'])
+def select_model():
+    global current_model
+    global models
+    global llm
+    global chat_engine
+
+    data = request.json
+    new_model = data.get('model')
+
+    if new_model is None:
+        return jsonify({"error": "Model parameter missing"}), 400
+    
+    if new_model not in models:
+        try:
+            current_digest, bars = '', {}
+            for progress in ollama.pull(new_model, stream=True):
+                digest = progress.get('digest', '')
+                if digest != current_digest and current_digest in bars:
+                    bars[current_digest].close()
+
+                if not digest:
+                    print(progress.get('status'))
+                    continue
+
+                if digest not in bars and (total := progress.get('total')):
+                    bars[digest] = tqdm(total=total, desc=f'pulling {digest[7:19]}', unit='B', unit_scale=True)
+
+                if completed := progress.get('completed'):
+                    bars[digest].update(completed - bars[digest].n)
+
+                current_digest = digest
+
+            models = [model["name"] for model in ollama.list()['models']]
+            
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
+            return jsonify({"error": str(e)}), 500
+        
+    current_model = new_model
+    llm = Ollama(model=new_model, request_timeout=120.0, base_url="http://localhost:11434")
+    Settings.llm = llm
+    chat_engine = vector_index.as_chat_engine(chat_mode="condense_plus_context", llm=llm,
+        context_prompt=(
+            "You are a chatbot, who needs to answer questions, preferably using the provided context"
+            "Here are the relevant documents for the context:\n"
+            "{context_str}"
+            "\nInstruction: Use the previous chat history, or the context above, to interact and help the user."
+        ), memory=memory, verbose=True
+    )
+    return jsonify({"message": "Model changed successfully"})
+
+@app.route('/api/delete_model', methods=['POST'])
+def delete_model():
+    global models
+    global current_model
+    global llm
+    global chat_engine
+
+    data = request.json
+    model = data.get('model')
+
+    if model is None:
+        return jsonify({"error": "Model parameter missing"}), 400
+
+    try:
+        if model == current_model:
+            current_model = "mistral:instruct"
+            llm = Ollama(model=current_model, request_timeout=120.0, base_url="http://localhost:11434")
+            Settings.llm = llm
+            chat_engine = vector_index.as_chat_engine(chat_mode="condense_plus_context", llm=llm,
+                context_prompt=(
+                    "You are a chatbot, who needs to answer questions, preferably using the provided context"
+                    "Here are the relevant documents for the context:\n"
+                    "{context_str}"
+                    "\nInstruction: Use the previous chat history, or the context above, to interact and help the user."
+                ), memory=memory, verbose=True
+            )
+        ollama.delete(model)
+        models = [model["name"] for model in ollama.list()['models']]
+        return jsonify({"message": "Model deleted successfully"})
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/')
 def index():

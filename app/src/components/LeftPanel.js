@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import UseWindowDimensions from './UseWindowDimensions';
 import { Tooltip } from 'bootstrap';
 
-function LeftPanel({isSidebarCollapsed, setChatStarted, setMessages}) {
+function LeftPanel({isSidebarCollapsed, setMessages}) {
   const [sessionTitles, setSessionTitles] = useState([]);
   const [selectedSession, setSelectedSession] = useState('');
   const isSmall = UseWindowDimensions();
@@ -71,7 +71,6 @@ function LeftPanel({isSidebarCollapsed, setChatStarted, setMessages}) {
       })
       .then(data => {
         setSelectedSession(mapping);
-        setChatStarted(false);
         sessionStorage.setItem('selectedSession', mapping);
         setMessages(() => {
           let nextId = 1; // Start id from 1
@@ -114,7 +113,7 @@ function LeftPanel({isSidebarCollapsed, setChatStarted, setMessages}) {
               .catch(error => console.error('Error fetching session titles:', error));
             }}
           >
-            <i class="bi bi-chat-text"></i> New Chat
+            <i className="bi bi-chat-text"></i> New Chat
           </button>
         </div>
         <div className="py-3 flex-grow-1 d-flex flex-column justify-content-center align-items-center">

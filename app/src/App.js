@@ -6,7 +6,6 @@ import UseWindowDimensions from './components/UseWindowDimensions';
 function App() {
   const isSmall = UseWindowDimensions();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [chatStarted, setChatStarted] = useState(false); // State to manage chat started state
   const [messages, setMessages] = useState([]);
 
   const toggleSidebarCollapse = () => {
@@ -17,7 +16,7 @@ function App() {
     <div className="container-fluid vh-100">
       <div className="row vh-100">
         <div className="col-auto bg-light justify-content-center align-items-center">
-          <LeftPanel isSidebarCollapsed={isSidebarCollapsed} toggleSidebarCollapse={toggleSidebarCollapse} setMessages={setMessages} setChatStarted={setChatStarted}/>
+          <LeftPanel isSidebarCollapsed={isSidebarCollapsed} toggleSidebarCollapse={toggleSidebarCollapse} setMessages={setMessages}/>
         </div>
         <div className="col ps-0 d-flex justify-content-center align-items-center h-100">
           <button
@@ -34,7 +33,7 @@ function App() {
               <i className="bi bi-chevron-compact-left"></i>
             )}
           </button>
-          <ChatArea messages={messages} setMessages={setMessages} chatStarted={chatStarted} setChatStarted={setChatStarted}/>
+          <ChatArea messages={messages} setMessages={setMessages}/>
         </div>
       </div>
     </div>

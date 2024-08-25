@@ -45,12 +45,20 @@ body {
 }
 
 .form-check-input:checked {
-  background-color: black;
-  border-color: gainsboro;
+  background-color: black !important;
+  border-color: gainsboro !important;
 }
 
 .form-check-input:focus {
-  box-shadow: 0 0 0 .25rem gainsboro;
+  box-shadow: 0 0 0 .25rem gainsboro !important;
+}
+
+.btn-close{
+  box-shadow: 0 0 0 .25rem gainsboro !important;
+}
+
+.nav-link{
+  color: black !important;
 }
 
 .tr-container {
@@ -72,7 +80,6 @@ body {
 }
 
 .message-container {
-  margin-top: 1em;
   height: 100%;
   max-width: 100%;
   overflow-y: scroll;
