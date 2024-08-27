@@ -1,7 +1,7 @@
 import React from 'react';
 import { components } from 'react-select';
 
-const CustomOption = (props) => {
+const CustomOptionForModel = (props) => {
   const { innerRef, innerProps, data } = props;
 
   const handleDelete = async () => {
@@ -47,4 +47,4 @@ const CustomOption = (props) => {
   );
 };
 
-export default CustomOption;
+export default CustomOptionForModel;

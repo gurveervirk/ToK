@@ -3,50 +3,11 @@ import { Tooltip } from 'bootstrap';
 import Markdown from 'markdown-to-jsx';
 import Code from './Code';
 import UploadModal from './UploadModal';
+import SettingsModal from './SettingsModal';
 import { components } from 'react-select';
 import CreatableSelect from 'react-select/creatable';
-import CustomOption from './CustomOption';
-
-const customStyles = {
-  control: (provided) => ({
-    ...provided,
-    borderColor: '#ccc',
-    boxShadow: 'none',
-    '&:hover': {
-      borderColor: '#888',
-    },
-  }),
-  menu: (provided) => ({
-    ...provided,
-    backgroundColor: '#fff',
-    border: '1px solid #ccc',
-    marginTop: 0,
-  }),
-  menuList: (provided) => ({
-    ...provided,
-    padding: 0,
-  }),
-  option: (provided, state) => ({
-    ...provided,
-    backgroundColor: state.isSelected ? '#ddd' : '#fff',
-    color: state.isSelected ? '#000' : '#333',
-    '&:hover': {
-      backgroundColor: '#eee',
-    },
-  }),
-  singleValue: (provided) => ({
-    ...provided,
-    color: '#333',
-  }),
-  placeholder: (provided) => ({
-    ...provided,
-    color: '#aaa',
-  }),
-  input: (provided) => ({
-    ...provided,
-    color: '#333',
-  }),
-};
+import CustomOption from './CustomOptionForModel';
+import customStyles from './customStyles';
 
 function ChatArea({ messages, setMessages }) {
   const [greeting, setGreeting] = useState('');
@@ -269,14 +230,24 @@ function ChatArea({ messages, setMessages }) {
               data-bs-toggle="modal"
               data-bs-target="#uploadModal"
               title="Upload documents"
+              disabled={isUploading}
             >
               {isUploading ? <i className="bi bi-pause-fill"></i> : <i className="bi bi-upload"></i>}
+            </button>
+            <button
+              className="btn btn-outline-dark ms-2"
+              data-bs-toggle="modal"
+              data-bs-target="#settingsModal"
+              title="Settings"
+            >
+              <i className="bi bi-gear"></i>
             </button>
           </div>
         </div>
       </nav>
 
       <UploadModal handleSave={handleUpload} />
+      <SettingsModal />
 
       <div className='d-flex flex-column justify-content-center mx-auto' style={{ width: '50rem', height: '90%' }}>
         <div className="flex-grow-1 overflow-auto d-flex flex-column justify-content-center align-items-center px-4 mx-auto">
