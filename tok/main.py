@@ -15,17 +15,19 @@ from flask_cors import CORS
 from flaskwebgui import FlaskUI
 from llama_index.llms.ollama import Ollama
 from llama_index.embeddings.fastembed import FastEmbedEmbedding
-from llama_index.vector_stores.neo4jvector import Neo4jVectorStore
+from llama_index.vector_stores.qdrant import QdrantVectorStore
 from llama_index.core.prompts import ChatMessage
 from llama_index.core.memory import ChatMemoryBuffer
-from llama_index.core import Settings, VectorStoreIndex, StorageContext, Document
+from llama_index.core import Settings, VectorStoreIndex, StorageContext, SimpleDirectoryReader
+from datetime import datetime, timedelta
+from tempfile import TemporaryDirectory
 import ollama
+import qdrant_client
 import json
 import traceback
 import time
 from tqdm import tqdm
 import subprocess
-from datetime import datetime, timedelta
 
 app = Flask(__name__, static_folder='web/build', static_url_path='/')
 ollama_process = None
@@ -63,9 +65,6 @@ def load_settings():
     except FileNotFoundError:
         print("The settings file doesn't exist. Creating a new one...")
         settings = {
-            "database": "neo4j",
-            "password": "default_password",
-            "uri": "bolt://localhost:7687",
             "chunk_size": 1024,
             "chunk_overlap": 20,
             "temperature": 0.75,
@@ -103,11 +102,14 @@ def load_prompts():
 
 # Initialize global variables
 def initialize_globals():
-    global llm, neo4j_vector_store, vector_index, storage_context, chat_engine, memory, models, current_model, settings, prompts, selected_LLM_prompt, selected_chat_engine_prompt
+    global llm, vector_store, vector_index, storage_context, chat_engine, memory, models, current_model, settings, prompts, selected_LLM_prompt, selected_chat_engine_prompt
 
     try:
         load_settings()
         load_prompts()
+        client = qdrant_client.QdrantClient(
+            path="db"
+        )
         models = [model["name"] for model in ollama.list()['models']]
         current_model = "mistral:instruct"
 
@@ -126,9 +128,9 @@ def initialize_globals():
         selected_chat_engine_prompt = prompts["Chat Engine"]["prompts"][prompts["Chat Engine"]["default"]]
 
         # Initialize Neo4j vector store and other components
-        neo4j_vector_store = Neo4jVectorStore(settings['database'], settings['password'], settings['uri'], 1024, hybrid_search=True)
-        vector_index = VectorStoreIndex.from_vector_store(vector_store=neo4j_vector_store)
-        storage_context = StorageContext.from_defaults(vector_store=neo4j_vector_store)
+        vector_store = QdrantVectorStore(client=client, collection_name="default")
+        vector_index = VectorStoreIndex.from_vector_store(vector_store=vector_store)
+        storage_context = StorageContext.from_defaults(vector_store=vector_store)
         memory = ChatMemoryBuffer.from_defaults(token_limit=settings["token_limit"])
         chat_engine = vector_index.as_chat_engine(chat_mode=settings["chat_mode"], llm=llm,
             context_prompt=(
@@ -308,56 +310,58 @@ def choose_chat_history():
 def add_new_documents():
     print('Adding new documents')
     try:
-        # Retrieve the form data
-        if 'metadata' not in request.form or 'files' not in request.files:
-            return jsonify({"error": "Missing files or metadata in form data"}), 400
+        with TemporaryDirectory() as temp_folder:
+            # Retrieve the form data
+            if 'metadata' not in request.form or 'files' not in request.files:
+                return jsonify({"error": "Missing files or metadata in form data"}), 400
 
-        files = request.files.getlist('files')
-        metadata = request.form.get('metadata')
+            files = request.files.getlist('files')
+            metadata = request.form.get('metadata')
 
-        if not files:
-            return jsonify({"error": "No files provided"}), 400
+            if not files:
+                return jsonify({"error": "No files provided"}), 400
 
-        metadata = json.loads(metadata)
-        
-        # Create a list to hold documents
-        documents = []
+            metadata = json.loads(metadata)
 
-        # Convert metadata from list of dicts to a single dict
-        meta = {m["key"]: m["value"] for m in metadata}
+            # Save files to the temporary directory
+            for file in files:
+                file_path = os.path.join(temp_folder, file.filename)
+                file.save(file_path)
 
-        for file in files:
-            # Load each file and associate it with the provided metadata
-            content = file.read().decode('utf-8')
-            doc = Document(text=content, metadata=meta)
-            documents.append(doc)
+            # Convert metadata from list of dicts to a single dict
+            meta = lambda filename: {"file_name": filename, **{m["key"]: m["value"] for m in metadata}}
 
-        if not documents:
-            return jsonify({"error": "No valid documents found"}), 400
+            files = [os.path.join(temp_folder, file) for file in os.listdir(temp_folder)]
 
-        # Update the vector index with the new documents
-        global vector_index
-        global chat_engine
-        global memory
-        global storage_context
-        global selected_chat_engine_prompt
-        global llm
-        global settings
-        
-        vector_index = vector_index.from_documents(documents, show_progress=True, storage_context=storage_context)
-        
-        # Update the chat engine to use the new documents
-        chat_engine = vector_index.as_chat_engine(
-            chat_mode=settings["chat_mode"],
-            llm=llm,
-            context_prompt=(
-                selected_chat_engine_prompt["value"]
-            ),
-            memory=memory,
-            verbose=True
-        )
+            # Use SimpleDirectoryReader to read the saved files
+            documents = SimpleDirectoryReader(input_files=files, file_metadata=meta, recursive=True).load_data()
 
-        return jsonify({"success": "Documents added successfully"}), 200
+            if not documents:
+                return jsonify({"error": "No valid documents found"}), 400
+
+            # Update the vector index with the new documents
+            global vector_index
+            global chat_engine
+            global memory
+            global storage_context
+            global selected_chat_engine_prompt
+            global llm
+            global settings
+            
+            vector_index = vector_index.from_documents(documents, show_progress=True, storage_context=storage_context)
+            
+            # Update the chat engine to use the new documents
+            chat_engine = vector_index.as_chat_engine(
+                chat_mode=settings["chat_mode"],
+                llm=llm,
+                context_prompt=(
+                    selected_chat_engine_prompt["value"]
+                ),
+                memory=memory,
+                verbose=True
+            )
+
+            return jsonify({"success": "Documents added successfully"}), 200
 
     except Exception as e:
         print(e)
@@ -562,17 +566,11 @@ def get_settings():
 def update_settings():
     global settings
     global chat_engine
-    global neo4j_vector_store
     global memory
     global llm
     global selected_chat_engine_prompt
-    global storage_context
-    global vector_index
     try:
         data = request.json
-        settings["database"] = data.get('database')
-        settings["password"] = data.get('password')
-        settings["uri"] = data.get('uri')
         settings["chunk_size"] = data.get('chunk_size')
         settings["chunk_overlap"] = data.get('chunk_overlap')
         settings["temperature"] = data.get('temperature')
@@ -588,9 +586,6 @@ def update_settings():
         Settings.chunk_size = settings["chunk_size"]
         Settings.chunk_overlap = settings["chunk_overlap"]
         memory = ChatMemoryBuffer.from_defaults(token_limit=settings["token_limit"])
-        neo4j_vector_store = Neo4jVectorStore(settings['database'], settings['password'], settings['uri'], 1024, hybrid_search=True)
-        vector_index = VectorStoreIndex.from_vector_store(vector_store=neo4j_vector_store)
-        storage_context = StorageContext.from_defaults(vector_store=neo4j_vector_store)
         chat_engine = vector_index.as_chat_engine(chat_mode=settings["chat_mode"], llm=llm,
             context_prompt=(
                 selected_chat_engine_prompt["value"]
