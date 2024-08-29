@@ -562,11 +562,17 @@ def get_settings():
 def update_settings():
     global settings
     global chat_engine
+    global neo4j_vector_store
     global memory
     global llm
     global selected_chat_engine_prompt
+    global storage_context
+    global vector_index
     try:
         data = request.json
+        settings["database"] = data.get('database')
+        settings["password"] = data.get('password')
+        settings["uri"] = data.get('uri')
         settings["chunk_size"] = data.get('chunk_size')
         settings["chunk_overlap"] = data.get('chunk_overlap')
         settings["temperature"] = data.get('temperature')
@@ -582,6 +588,9 @@ def update_settings():
         Settings.chunk_size = settings["chunk_size"]
         Settings.chunk_overlap = settings["chunk_overlap"]
         memory = ChatMemoryBuffer.from_defaults(token_limit=settings["token_limit"])
+        neo4j_vector_store = Neo4jVectorStore(settings['database'], settings['password'], settings['uri'], 1024, hybrid_search=True)
+        vector_index = VectorStoreIndex.from_vector_store(vector_store=neo4j_vector_store)
+        storage_context = StorageContext.from_defaults(vector_store=neo4j_vector_store)
         chat_engine = vector_index.as_chat_engine(chat_mode=settings["chat_mode"], llm=llm,
             context_prompt=(
                 selected_chat_engine_prompt["value"]
