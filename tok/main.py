@@ -1,5 +1,14 @@
 import os
-os.environ["TIKTOKEN_CACHE_DIR"] = 'tiktoken_cache'
+import sys
+
+if getattr(sys, 'frozen', False):
+    # If the application is running as a bundled executable
+    bundle_dir = sys._MEIPASS
+else:
+    # If running in a normal Python environment
+    bundle_dir = os.path.dirname(os.path.abspath(__file__))
+
+os.environ["TIKTOKEN_CACHE_DIR"] = os.path.join(bundle_dir, 'tiktoken_cache')
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
@@ -603,10 +612,7 @@ def cleanup():
     os.system("neo4j stop")
 
 if __name__ == '__main__':
-    chrome_path = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
-    browser_path = chrome_path if os.path.exists(chrome_path) else None
-
-    ui = FlaskUI(app=app, server="flask", width=1280, height=720, port=5000, on_shutdown=cleanup, browser_path=browser_path) # Change width and height as needed
+    ui = FlaskUI(app=app, server="flask", width=1280, height=720, port=5000, on_shutdown=cleanup) # Change width and height as needed
     try:
         create_directory_if_not_exists('prev_msgs')
         start_services()

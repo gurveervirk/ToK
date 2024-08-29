@@ -13,3 +13,5 @@ sub_optimal.txt
 /tok/prompts.json
 /tok/tiktoken_cache
 /other_prev_msgs
+/tok/tok.zip
+/tok/tok.ico
