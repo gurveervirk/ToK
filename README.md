@@ -1,31 +1,31 @@
 # Trove Of Knowledge (ToK)
 
 <div align="center">
-  <img height="400" width="400" alt="Trove of Knowledge Logo" src="https://github.com/gurveervirk/ToK/blob/main/app/public/tok.jpg">
+  <img height="300" width="300" alt="Trove of Knowledge Logo" src="https://github.com/gurveervirk/ToK/blob/main/app/public/tok.jpg">
 </div>
 
 **Trove of Knowledge** (ToK) is a *fully local*, *high-quality*, and *extensible Retrieval-Augmented Generation (RAG) application* that leverages AI models and indices to query documents and generate contextually accurate responses. With ToK, you can upload documents and receive more informed answers tailored to your queries. Additionally, the app automatically stores your chats, allowing you to revisit and continue conversations at any time.
 
 ## Table of Contents
 
-- [Features](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#features)
-- [Prerequisites](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#prerequisites)
-- [Getting Started](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#getting-started)
-- [Usage](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#usage)
-- [Visual Tour](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#visual-tour)
+- 📋 [Features](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#features)
+- 🛠️ [Prerequisites](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#prerequisites)
+- 🚀 [Getting Started](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#getting-started)
+- 📝 [Usage](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#usage)
+- 🌟 [Visual Tour](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#visual-tour)
 
 ## Features
 
-- **Fully Local, Secure, and Privacy-Focused:** ToK ensures that all operations are performed locally, keeping your data private and secure.
-- **Versatile Document Uploading:** Upload various types of text documents and folders to create an index for more informed AI responses.
-- **Optional Metadata Assignment:** Enhance document uploads with custom metadata, making your data more organized and accessible.
-- **Comprehensive UI Settings:** Easily access and modify important settings like chunking options, temperature, context window size, and chat mode through the user interface.
-- **Custom Prompts:** Add and use personalized prompts for both the Large Language Model (LLM) and the chat engine, tailoring responses to your needs.
-- **Persistent Chats with Titles:** Chats are saved with customizable titles, allowing you to revisit and continue them later.
-- **Persistent Chat History:** Access and review past conversations at any time.
-- **Model Selection from Ollama:** Choose and pull AI models directly from Ollama for specific tasks and preferences.
-- **Streaming Responses with Smart Snippets:** Experience real-time responses with smart output formatting, especially for code snippets.
-- **Extensible:** Easily extend ToK's functionality with additional features or integrations.
+- 🛡️ **Fully Local, Secure, and Privacy-Focused:** ToK ensures that all operations are performed locally, keeping your data private and secure.
+- 📂 **Versatile Document Uploading:** Upload various types of text documents and folders to create an index for more informed AI responses.
+- 🏷️ **Optional Metadata Assignment:** Enhance document uploads with custom metadata, making your data more organized and accessible.
+- ⚙️ **Comprehensive UI Settings:** Easily access and modify important settings like chunking options, temperature, context window size, and chat mode through the user interface.
+- ✍️ **Custom Prompts:** Add and use personalized prompts for both the Large Language Model (LLM) and the chat engine, tailoring responses to your needs.
+- 🗂️ **Persistent Chats with Titles:** Chats are saved with customizable titles, allowing you to revisit and continue them later.
+- 📜 **Persistent Chat History:** Access and review past conversations at any time.
+- 🤖 **Model Selection from Ollama:** Choose and pull AI models directly from Ollama for specific tasks and preferences.
+- ⏳ **Streaming Responses with Smart Snippets:** Experience real-time responses with smart output formatting, especially for code snippets.
+- 🔧 **Extensible:** Easily extend ToK's functionality with additional features or integrations.
 
 ## Prerequisites
 
