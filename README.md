@@ -76,16 +76,16 @@ Explore the key features and user interface of ToK through the images below:
 
 <table align="center">
   <tr>
-    <td align="center">
+    <td align="center" colspan=3>
       <h4>Landing Page</h4>
-      <img width="200" alt="landing_page" src="https://github.com/gurveervirk/ToK/blob/main/misc/pics/landing_page.png"
+      <img alt="landing_page" src="https://github.com/gurveervirk/ToK/blob/main/misc/pics/landing_page.png"
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <h4>Upload Modal</h4>
       <img width="200" alt="file_upload" src="https://github.com/gurveervirk/ToK/blob/main/misc/pics/file_upload.png"
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <h4>Settings Modal</h4>
       <img width="200" alt="settings" src="https://github.com/gurveervirk/ToK/blob/main/misc/pics/settings.png"
