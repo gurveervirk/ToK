@@ -333,7 +333,7 @@ def add_new_documents():
                 file.save(file_path)
 
             # Convert metadata from list of dicts to a single dict
-            meta = lambda filename: {"file_name": filename, **{m["key"]: m["value"] for m in metadata}}
+            meta = lambda filename: {"file_name": filename, **{m["key"]: m["value"] for m in metadata if m["key"] and m["value"]}}
 
             files = [os.path.join(temp_folder, file) for file in os.listdir(temp_folder)]
 
@@ -579,7 +579,7 @@ def update_settings():
     try:
         data = request.json
         settings["database"] = data.get('database')
-        settings["password"] = data.get('password')
+        settings["password"] = str(data.get('password'))
         settings["uri"] = data.get('uri')
         settings["chunk_size"] = data.get('chunk_size')
         settings["chunk_overlap"] = data.get('chunk_overlap')
