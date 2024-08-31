@@ -8,11 +8,11 @@
 
 ## Table of Contents
 
-- [Features](https://github.com/gurveervirk/ToK/edit/main/README.md#features)
-- [Prerequisites](https://github.com/gurveervirk/ToK/edit/main/README.md#prerequisites)
-- [Getting Started](https://github.com/gurveervirk/ToK/edit/main/README.md#getting-started)
-- [Usage](https://github.com/gurveervirk/ToK/edit/main/README.md#usage)
-- [Visual Tour](https://github.com/gurveervirk/ToK/edit/main/README.md#visual-tour)
+- [Features](https://github.com/gurveervirk/ToK/main/README.md#features)
+- [Prerequisites](https://github.com/gurveervirk/ToK/main/README.md#prerequisites)
+- [Getting Started](https://github.com/gurveervirk/ToK/main/README.md#getting-started)
+- [Usage](https://github.com/gurveervirk/ToK/main/README.md#usage)
+- [Visual Tour](https://github.com/gurveervirk/ToK/main/README.md#visual-tour)
 
 ## Features
 
