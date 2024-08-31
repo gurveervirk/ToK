@@ -9,25 +9,26 @@ else:
     bundle_dir = os.path.dirname(os.path.abspath(__file__))
 
 os.environ["TIKTOKEN_CACHE_DIR"] = os.path.join(bundle_dir, 'tiktoken_cache')
+os.environ["NLTK_DATA"] = os.path.join(bundle_dir, 'nltk_data')
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from flaskwebgui import FlaskUI
 from llama_index.llms.ollama import Ollama
 from llama_index.embeddings.fastembed import FastEmbedEmbedding
-from llama_index.vector_stores.qdrant import QdrantVectorStore
+from llama_index.vector_stores.neo4jvector import Neo4jVectorStore
 from llama_index.core.prompts import ChatMessage
 from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.core import Settings, VectorStoreIndex, StorageContext, SimpleDirectoryReader
 from datetime import datetime, timedelta
 from tempfile import TemporaryDirectory
 import ollama
-import qdrant_client
 import json
 import traceback
 import time
 from tqdm import tqdm
 import subprocess
+import platform
 
 app = Flask(__name__, static_folder='web/build', static_url_path='/')
 ollama_process = None
@@ -44,7 +45,10 @@ def start_services():
         time.sleep(1)
 
         # Start Neo4j
-        os.system("neo4j start")
+        if platform.system() == "Linux":
+            os.system("systemctl enable neo4j.service")
+        else:
+            os.system("neo4j start")
 
     except Exception as e:
         print("Error starting services: ", e)
@@ -65,6 +69,9 @@ def load_settings():
     except FileNotFoundError:
         print("The settings file doesn't exist. Creating a new one...")
         settings = {
+            "database": "neo4j",
+            "password": "default_password",
+            "uri": "bolt://localhost:7687",
             "chunk_size": 1024,
             "chunk_overlap": 20,
             "temperature": 0.75,
@@ -107,9 +114,6 @@ def initialize_globals():
     try:
         load_settings()
         load_prompts()
-        client = qdrant_client.QdrantClient(
-            path="db"
-        )
         models = [model["name"] for model in ollama.list()['models']]
         current_model = "mistral:instruct"
 
@@ -128,7 +132,7 @@ def initialize_globals():
         selected_chat_engine_prompt = prompts["Chat Engine"]["prompts"][prompts["Chat Engine"]["default"]]
 
         # Initialize Neo4j vector store and other components
-        vector_store = QdrantVectorStore(client=client, collection_name="default")
+        vector_store = Neo4jVectorStore(settings['database'], settings['password'], settings['uri'], 1024, hybrid_search=True)
         vector_index = VectorStoreIndex.from_vector_store(vector_store=vector_store)
         storage_context = StorageContext.from_defaults(vector_store=vector_store)
         memory = ChatMemoryBuffer.from_defaults(token_limit=settings["token_limit"])
@@ -569,8 +573,14 @@ def update_settings():
     global memory
     global llm
     global selected_chat_engine_prompt
+    global vector_store
+    global vector_index
+    global storage_context
     try:
         data = request.json
+        settings["database"] = data.get('database')
+        settings["password"] = data.get('password')
+        settings["uri"] = data.get('uri')
         settings["chunk_size"] = data.get('chunk_size')
         settings["chunk_overlap"] = data.get('chunk_overlap')
         settings["temperature"] = data.get('temperature')
@@ -585,6 +595,9 @@ def update_settings():
         Settings.llm = llm
         Settings.chunk_size = settings["chunk_size"]
         Settings.chunk_overlap = settings["chunk_overlap"]
+        vector_store = Neo4jVectorStore(settings['database'], settings['password'], settings['uri'], 1024, hybrid_search=True)
+        vector_index = VectorStoreIndex.from_vector_store(vector_store=vector_store)
+        storage_context = StorageContext.from_defaults(vector_store=vector_store)
         memory = ChatMemoryBuffer.from_defaults(token_limit=settings["token_limit"])
         chat_engine = vector_index.as_chat_engine(chat_mode=settings["chat_mode"], llm=llm,
             context_prompt=(

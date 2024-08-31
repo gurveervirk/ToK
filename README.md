@@ -1,40 +1,98 @@
-# Trove Of Knowledge
+# Trove Of Knowledge (ToK)
 
 <div align="center">
-  <img height="400" width="400" alt="gurveervirk/ToK" src="https://github.com/gurveervirk/ToK/blob/main/app/public/tok.jpg">
+  <img height="400" width="400" alt="Trove of Knowledge Logo" src="https://github.com/gurveervirk/ToK/blob/main/app/public/tok.jpg">
 </div>
 
-This project is a *fully local*, *high quality*, *ChatGPT-esque*, *extensible RAG application*, that makes use of AI models and indices to query documents and retrieve better-informed responses from the models. It allows you to upload your documents that can be used to answer any corresponding queries. It automatically stores your chats for future usage.
+**Trove of Knowledge** (ToK) is a *fully local*, *high-quality*, and *extensible Retrieval-Augmented Generation (RAG) application* that leverages AI models and indices to query documents and generate contextually accurate responses. With ToK, you can upload documents and receive more informed answers tailored to your queries. Additionally, the app automatically stores your chats, allowing you to revisit and continue conversations at any time.
+
+## Table of Contents
+
+- [Features](https://github.com/gurveervirk/ToK/edit/main/README.md#features)
+- [Prerequisites](https://github.com/gurveervirk/ToK/edit/main/README.md#prerequisites)
+- [Getting Started](https://github.com/gurveervirk/ToK/edit/main/README.md#getting-started)
+- [Usage](https://github.com/gurveervirk/ToK/edit/main/README.md#usage)
+- [Visual Tour](https://github.com/gurveervirk/ToK/edit/main/README.md#visual-tour)
+
+## Features
+
+- **Fully Local, Secure, and Privacy-Focused:** ToK ensures that all operations are performed locally, keeping your data private and secure.
+- **Versatile Document Uploading:** Upload various types of text documents and folders to create an index for more informed AI responses.
+- **Optional Metadata Assignment:** Enhance document uploads with custom metadata, making your data more organized and accessible.
+- **Comprehensive UI Settings:** Easily access and modify important settings like chunking options, temperature, context window size, and chat mode through the user interface.
+- **Custom Prompts:** Add and use personalized prompts for both the Large Language Model (LLM) and the chat engine, tailoring responses to your needs.
+- **Persistent Chats with Titles:** Chats are saved with customizable titles, allowing you to revisit and continue them later.
+- **Persistent Chat History:** Access and review past conversations at any time.
+- **Model Selection from Ollama:** Choose and pull AI models directly from Ollama for specific tasks and preferences.
+- **Streaming Responses with Smart Snippets:** Experience real-time responses with smart output formatting, especially for code snippets.
+- **Extensible:** Easily extend ToK's functionality with additional features or integrations.
 
 ## Prerequisites
 
-This app has two dependencies that need to be installed separately:
-- [Neo4j Desktop](https://neo4j.com/download/) for best-in-class vector and graph stores
-- [Ollama](https://ollama.com/download) for quick and easy model download, serving as well as automatic and smart device loading
+To run ToK, you'll need to install two dependencies:
 
-Once both are installed and setup using their installers, set the **neo4j bin path** in **PATH** in environmental variables, so that it can be accessed by our app. 
+- **[Neo4j Desktop](https://neo4j.com/download/):** Used for top-tier vector and graph stores.
+- **[Ollama](https://ollama.com/download):** Facilitates easy model downloading, serving, and intelligent device loading.
 
-bin path ex: \path\to\user\.Neo4jDesktop\relate-data\dbmss\your-current-dbms\bin
+### Setting Up Neo4j
 
-Run ```neo4j windows-service install``` in command prompt/powershell to activate neo4j cli.
+1. Download and install *Neo4j Desktop*.
+2. Add the **Neo4j bin path** to your system's **PATH** environment variable. This allows Neo4j to be accessed by ToK.
+   - Example bin path for Windows: `\path\to\user\.Neo4jDesktop\relate-data\dbmss\your-current-dbms\bin`
+
+- (For Windows) Activate the Neo4j CLI by running the following command in Command Prompt or PowerShell for Windows:
+
+   ```bash
+   neo4j windows-service install
+   ```
+
+> Please go through [this link](https://neo4j.com/docs/operations-manual/current/installation/) to perform the above steps for other arch's (and for reference).
 
 ## Getting Started
 
-1) Go to the Releases page, and download the latest ToKInstaller.exe. 
-2) Run it and follow the steps to complete the installation.
-3) Go to the installation directory (default: "C:\Program Files (x86)\ToK"), and make the following changes to settings.json:
-    - *username* to your working database name
-    - *password* to your newly set password in neo4j project
-    - *uri* to your neo4j project's uri
+1. Visit the [Releases](https://github.com/gurveervirk/ToK/releases) page and download the latest `ToK.exe` to a location/directory (app creates necessary files and folders for correct working).
+2. Modify the settings by running the app once and clicking the settings icon at the top right hand corner:
+   - **username:** Replace with your Neo4j database username.
+   - **password:** Replace with the password you set in your Neo4j project.
+   - **uri:** Replace with your Neo4j project's URI.
 
-p.s username and uri should remain the same as they are the default values in neo4j.
 
-**Done!**
+   > **Note:** The default username and URI are the default values for a Neo4j DB.
+   > You can also modify it in `settings.json`, created by the app.
+
+**Done!** You're now ready to start using ToK.
 
 ## Usage
 
-Start the app from desktop or start menu after completing the above tasks.
+After completing the setup:
 
-The app allows the user to simply chat with the bot, if the checkbox is left unchecked, or use the index created with the uploaded documents for better-informed responses.
+1. Launch ToK from the desktop or start menu.
+2. Choose to either chat directly with the bot or upload documents using the top-right button for enhanced query responses.
+3. Enjoy the seamless experience of interacting with a locally-run, AI-powered knowledge assistant that keeps your data private and secure.
 
-Upload documents using the top right button.
+## Visual Tour
+
+Explore the key features and user interface of ToK through the images below:
+
+<table align="center">
+  <tr>
+    <td align="center">
+      <h4>Landing Page</h4>
+      <img width="200" alt="landing_page" src="https://github.com/gurveervirk/ToK/blob/main/misc/pics/landing_page.png"
+    </td>
+    <td align="center">
+      <h4>Upload Modal</h4>
+      <img width="200" alt="file_upload" src="https://github.com/gurveervirk/ToK/blob/main/misc/pics/file_upload.png"
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <h4>Settings Modal</h4>
+      <img width="200" alt="settings" src="https://github.com/gurveervirk/ToK/blob/main/misc/pics/settings.png"
+    </td>
+    <td align="center">
+      <h4>Prompts Modal</h4>
+      <img width="200" alt="prompts" src="https://github.com/gurveervirk/ToK/blob/main/misc/pics/prompts.png"
+    </td>
+  </tr>
+</table>
