@@ -64,8 +64,11 @@ def create_directory_if_not_exists(directory):
 def load_settings():
     global settings
     try:
-        with open('settings.json', 'r') as f:
+        with open('settings.json', 'r+') as f:
             settings = json.load(f)
+            if type(settings["password"]) != str:
+                settings["password"] = str(settings["password"])
+            json.dump(settings, f)
     except FileNotFoundError:
         print("The settings file doesn't exist. Creating a new one...")
         settings = {
