@@ -33,16 +33,20 @@ import platform
 app = Flask(__name__, static_folder='web/build', static_url_path='/')
 ollama_process = None
 CORS(app)
+ollama_host = os.getenv('OLLAMA_HOST', 'localhost')
+ollama_port = os.getenv('OLLAMA_PORT', '11434')
 
+ollama_url = f"http://{ollama_host}:{ollama_port}"
+print(f"Ollama URL: {ollama_url}")
 def start_services():
     global ollama_process
     try:
-        # Start Ollama
-        ollama_process = subprocess.Popen(["ollama", "serve"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        print("Starting Ollama...")
-        print("Ollama started successfully")
+        # # Start Ollama
+        # ollama_process = subprocess.Popen(["ollama", "serve"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # print("Starting Ollama...")
+        # print("Ollama started successfully")
 
-        time.sleep(1)
+        # time.sleep(1)
 
         # Start Neo4j
         if platform.system() == "Linux":
@@ -66,6 +70,7 @@ def load_settings():
     try:
         with open('settings.json', 'r') as f:
             settings = json.load(f)
+            print(settings)
     except FileNotFoundError:
         print("The settings file doesn't exist. Creating a new one...")
         settings = {
@@ -109,7 +114,7 @@ def load_prompts():
 
 # Initialize global variables
 def initialize_globals():
-    global llm, vector_store, vector_index, storage_context, chat_engine, memory, models, current_model, settings, prompts, selected_LLM_prompt, selected_chat_engine_prompt
+    global llm, vector_store, vector_index, storage_context, chat_engine, memory, models, current_model, settings, prompts, selected_LLM_prompt, selected_chat_engine_prompt, ollama_url
 
     try:
         load_settings()
@@ -120,7 +125,7 @@ def initialize_globals():
         # Initialize the embed model
         embed_model = FastEmbedEmbedding(model_name="mixedbread-ai/mxbai-embed-large-v1")
         Settings.embed_model = embed_model
-        llm = Ollama(model=current_model, request_timeout=120.0, base_url="http://localhost:11434", temperature=settings["temperature"], context_window=settings["context_window"])
+        llm = Ollama(model=current_model, request_timeout=120.0, base_url=ollama_url, temperature=settings["temperature"], context_window=settings["context_window"])
         Settings.llm = llm
         Settings.chunk_size = settings["chunk_size"]
         Settings.chunk_overlap = settings["chunk_overlap"]
@@ -412,6 +417,7 @@ def select_model():
     global vector_index
     global selected_chat_engine_prompt
     global settings
+    global ollama_url
 
     data = request.json
     new_model = data.get('model')
@@ -447,7 +453,7 @@ def select_model():
             return jsonify({"error": str(e)}), 500
         
     current_model = new_model
-    llm = Ollama(model=new_model, request_timeout=120.0, base_url="http://localhost:11434")
+    llm = Ollama(model=new_model, request_timeout=120.0, base_url=ollama_url)
     Settings.llm = llm
     chat_engine = vector_index.as_chat_engine(chat_mode=settings["chat_mode"], llm=llm,
         context_prompt=(
@@ -467,6 +473,7 @@ def delete_model():
     global storage_context
     global selected_chat_engine_prompt
     global settings
+    global ollama_url
 
     data = request.json
     model = data.get('model')
@@ -477,7 +484,7 @@ def delete_model():
     try:
         if model == current_model:
             current_model = "mistral:instruct"
-            llm = Ollama(model=current_model, request_timeout=120.0, base_url="http://localhost:11434")
+            llm = Ollama(model=current_model, request_timeout=120.0, base_url=ollama_url)
             Settings.llm = llm
             chat_engine = vector_index.as_chat_engine(chat_mode=settings["chat_mode"], llm=llm,
                 context_prompt=(
@@ -576,6 +583,7 @@ def update_settings():
     global vector_store
     global vector_index
     global storage_context
+    global ollama_url
     try:
         data = request.json
         settings["database"] = data.get('database')
@@ -591,7 +599,7 @@ def update_settings():
         with open('settings.json', 'w') as f:
             json.dump(settings, f)
 
-        llm = Ollama(model=current_model, request_timeout=120.0, base_url="http://localhost:11434", temperature=settings["temperature"], context_window=settings["context_window"])
+        llm = Ollama(model=current_model, request_timeout=120.0, base_url=ollama_url, temperature=settings["temperature"], context_window=settings["context_window"])
         Settings.llm = llm
         Settings.chunk_size = settings["chunk_size"]
         Settings.chunk_overlap = settings["chunk_overlap"]
@@ -616,20 +624,21 @@ def index():
 
 # Initialize Flask
 def start_flask_app():
-    ui.run()
+    # ui.run()
+    app.run(debug=True, host='0.0.0.0', port=5000)
 
-def cleanup():
-    global ollama_process
+# def cleanup():
+#     global ollama_process
     
-    # Terminate the ollama process if it exists
-    if ollama_process:
-        ollama_process.terminate()
+#     # Terminate the ollama process if it exists
+#     if ollama_process:
+#         ollama_process.terminate()
     
-    # Stop Neo4j service (assuming this is required on all systems)
-    os.system("neo4j stop")
+#     # Stop Neo4j service (assuming this is required on all systems)
+#     os.system("neo4j stop")
 
 if __name__ == '__main__':
-    ui = FlaskUI(app=app, server="flask", width=1280, height=720, port=5000, on_shutdown=cleanup) # Change width and height as needed
+    # ui = FlaskUI(app=app, server="flask", width=1280, height=720, port=5000, on_shutdown=cleanup) # Change width and height as needed
     try:
         create_directory_if_not_exists('prev_msgs')
         start_services()
@@ -637,5 +646,5 @@ if __name__ == '__main__':
         start_flask_app()
         
     finally:
-        ollama_process.terminate()
+        # ollama_process.terminate()
         os.system("neo4j stop")

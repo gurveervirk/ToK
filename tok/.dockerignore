@@ -1,0 +1,4 @@
+prev_msgs
+*.pyc
+__pycache__
+settings.json

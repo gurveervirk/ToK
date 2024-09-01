@@ -1,0 +1,28 @@
+version: '1.0'
+
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      # Add an environment variable to configure Ollama's host and port in your app
+      OLLAMA_HOST: "host.docker.internal"
+      OLLAMA_PORT: "11434"
+    depends_on:
+      - neo4j
+    # Network mode can remain as default unless special configuration is needed
+    # network_mode: "host" (only if you need direct access to all host ports)
+
+  neo4j:
+    image: neo4j:5.6
+    environment:
+      NEO4J_AUTH: none
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+
+volumes:
+  neo4j_data:
