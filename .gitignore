@@ -10,7 +10,6 @@ sub_optimal.txt
 /tok/web/build
 /tok/build
 /tok/prev_msgs
-/tok/prompts.json
 /tok/tiktoken_cache
 /other_prev_msgs
 /tok/tok.zip

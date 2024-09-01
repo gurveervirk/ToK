@@ -14,6 +14,7 @@ os.environ["NLTK_DATA"] = os.path.join(bundle_dir, 'nltk_data')
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from flaskwebgui import FlaskUI
+from flask_swagger_ui import get_swaggerui_blueprint
 from llama_index.llms.ollama import Ollama
 from llama_index.embeddings.fastembed import FastEmbedEmbedding
 from llama_index.vector_stores.neo4jvector import Neo4jVectorStore
@@ -33,6 +34,20 @@ import platform
 app = Flask(__name__, static_folder='web/build', static_url_path='/')
 ollama_process = None
 CORS(app)
+
+# Path to your Swagger YAML file
+SWAGGER_URL = '/api/docs'  # URL for exposing Swagger UI
+API_URL = '/swagger.yaml'  # URL for your swagger.yaml file
+
+# Register the Swagger UI blueprint at /api/docs
+swaggerui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={  # Swagger UI config overrides
+        'app_name': "ToK"
+    }
+)
+app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
 def start_services():
     global ollama_process
@@ -64,11 +79,15 @@ def create_directory_if_not_exists(directory):
 def load_settings():
     global settings
     try:
-        with open('settings.json', 'r+') as f:
+        with open('settings.json', 'r') as f:
             settings = json.load(f)
-            if type(settings["password"]) != str:
+        
+        if not isinstance(settings["password"], str):
+            print("Password not a string. Required for correct operation. Fixing...")
+            with open('settings.json', 'w') as f:
                 settings["password"] = str(settings["password"])
-            json.dump(settings, f)
+                json.dump(settings, f)
+
     except FileNotFoundError:
         print("The settings file doesn't exist. Creating a new one...")
         settings = {
@@ -173,6 +192,11 @@ def save_to_session(session, data):
         session_file.seek(0)
         json.dump(session_data, session_file)
         session_file.truncate()
+
+# Serve the Swagger YAML file directly
+@app.route('/swagger.yaml')
+def swagger_yaml():
+    return send_from_directory('web/build/static', 'swagger.yaml')
 
 @app.route('/api/query', methods=['POST'])
 def query():
