@@ -13,7 +13,6 @@ os.environ["NLTK_DATA"] = os.path.join(bundle_dir, 'nltk_data')
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
-from flaskwebgui import FlaskUI
 from llama_index.llms.ollama import Ollama
 from llama_index.embeddings.fastembed import FastEmbedEmbedding
 from llama_index.vector_stores.neo4jvector import Neo4jVectorStore
@@ -25,10 +24,11 @@ from tempfile import TemporaryDirectory
 import ollama
 import json
 import traceback
-import time
 from tqdm import tqdm
-import subprocess
-import platform
+# from flaskwebgui import FlaskUI
+# import time
+# import subprocess
+# import platform
 
 app = Flask(__name__, static_folder='web/build', static_url_path='/')
 ollama_process = None
@@ -37,27 +37,27 @@ ollama_host = os.getenv('OLLAMA_HOST', 'localhost')
 ollama_port = os.getenv('OLLAMA_PORT', '11434')
 
 ollama_url = f"http://{ollama_host}:{ollama_port}"
-print(f"Ollama URL: {ollama_url}")
-def start_services():
-    global ollama_process
-    try:
-        # # Start Ollama
-        # ollama_process = subprocess.Popen(["ollama", "serve"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        # print("Starting Ollama...")
-        # print("Ollama started successfully")
+# print(f"Ollama URL: {ollama_url}")
+# def start_services():
+#     global ollama_process
+#     try:
+#         # # Start Ollama
+#         # ollama_process = subprocess.Popen(["ollama", "serve"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#         # print("Starting Ollama...")
+#         # print("Ollama started successfully")
 
-        # time.sleep(1)
+#         # time.sleep(1)
 
-        # Start Neo4j
-        if platform.system() == "Linux":
-            os.system("systemctl enable neo4j.service")
-        else:
-            os.system("neo4j start")
+#         # Start Neo4j
+#         if platform.system() == "Linux":
+#             os.system("systemctl enable neo4j.service")
+#         else:
+#             os.system("neo4j start")
 
-    except Exception as e:
-        print("Error starting services: ", e)
-        traceback.print_exc()
-        exit(1)
+#     except Exception as e:
+#         print("Error starting services: ", e)
+#         traceback.print_exc()
+#         exit(1)
 
 # Function to create the prev_msgs directory if it doesn't exist
 def create_directory_if_not_exists(directory):
@@ -70,13 +70,13 @@ def load_settings():
     try:
         with open('settings.json', 'r') as f:
             settings = json.load(f)
-            print(settings)
+            # print(settings)
     except FileNotFoundError:
         print("The settings file doesn't exist. Creating a new one...")
         settings = {
             "database": "neo4j",
             "password": "default_password",
-            "uri": "bolt://localhost:7687",
+            "uri": "bolt://neo4j:7687",
             "chunk_size": 1024,
             "chunk_overlap": 20,
             "temperature": 0.75,
@@ -84,6 +84,7 @@ def load_settings():
             "token_limit": 2048,
             "chat_mode": "condense_plus_context"
         }
+
         with open('settings.json', 'w+') as f:
             json.dump(settings, f)
 
@@ -641,7 +642,7 @@ if __name__ == '__main__':
     # ui = FlaskUI(app=app, server="flask", width=1280, height=720, port=5000, on_shutdown=cleanup) # Change width and height as needed
     try:
         create_directory_if_not_exists('prev_msgs')
-        start_services()
+        # start_services()
         initialize_globals()
         start_flask_app()
         

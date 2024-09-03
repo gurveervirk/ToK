@@ -11,13 +11,10 @@ services:
       OLLAMA_PORT: "11434"
     depends_on:
       - neo4j
-    # Network mode can remain as default unless special configuration is needed
-    # network_mode: "host" (only if you need direct access to all host ports)
-
   neo4j:
-    image: neo4j:5.6
+    image: neo4j:5.11
     environment:
-      NEO4J_AUTH: none
+      NEO4J_AUTH: neo4j/default_password
     ports:
       - "7474:7474"
       - "7687:7687"
