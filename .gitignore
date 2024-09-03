@@ -7,7 +7,6 @@ sub_optimal.txt
 /tok/installer_script.iss
 /tok/TokInstaller.exe
 /tok/venv
-/tok/web/build
 /tok/build
 /tok/prev_msgs
 /tok/tiktoken_cache

@@ -16,7 +16,9 @@ function ChatArea({ messages, setMessages }) {
   const [useQueryEngine, setUseQueryEngine] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [models, setModels] = useState([{value: 'mistral:instruct', label: 'mistral:instruct'}]);
+  const [embed_models, setEmbedModels] = useState([{value: 'mxbai-embed-large', label: 'mxbai-embed-large'}]);
   const [selectedModel, setSelectedModel] = useState("mistral:instruct");
+  const [selectedEmbedModel, setSelectedEmbedModel] = useState("mxbai-embed-large");
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -44,9 +46,14 @@ function ChatArea({ messages, setMessages }) {
     try {
       const response = await fetch('http://127.0.0.1:5000/api/list_models');
       const data = await response.json();
-      const modelOptions = data.models.map(model => ({ value: model, label: model }));
+      const llms = data.llm;
+      const embed = data.embed;
+      const modelOptions = llms.map(model => ({ value: 'llm', label: model }));
+      const embedModelOptions = embed.map(model => ({ value: 'embed', label: model }));
       setModels(modelOptions);
       setSelectedModel(data.selectedModel || '');
+      setEmbedModels(embedModelOptions);
+      setSelectedEmbedModel(data.selectedEmbedModel || '');
     } catch (error) {
       console.error('Error fetching models:', error);
     }
@@ -77,7 +84,7 @@ function ChatArea({ messages, setMessages }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ model: selectedOption.value }),
+        body: JSON.stringify({ model: selectedOption.label, type: selectedOption.value }),
       });
       if (!response.ok) {
         throw new Error('Failed to select model');
@@ -207,7 +214,7 @@ function ChatArea({ messages, setMessages }) {
               defaultValue={selectedModel}
               onChange={handleModelChange}
               options={models}
-              placeholder="Select or pull a model"
+              placeholder="Select or pull an LLM"
               isClearable
               className="w-100"
               styles={customStyles}
@@ -220,6 +227,29 @@ function ChatArea({ messages, setMessages }) {
                     <CustomOption {...props} fetchModels={fetchModels} />
                   ),
               }}
+              getNewOptionData={(inputValue, optionLabel) => ({ value: 'llm', label: optionLabel })}
+            />
+          </div>
+
+          <div className="ps-2 dropdown">
+            <CreatableSelect
+              defaultValue={selectedEmbedModel}
+              onChange={handleModelChange}
+              options={embed_models}
+              placeholder="Select or pull an embedding model"
+              isClearable
+              className="w-100"
+              styles={customStyles}
+              classNamePrefix="react-select"
+              components={{
+                Option: (props) =>
+                  props.label === "mxbai-embed-large:latest" ? (
+                    <components.Option {...props} />
+                  ) : (
+                    <CustomOption {...props} fetchModels={fetchModels} />
+                  ),
+              }}
+              getNewOptionData={(inputValue, optionLabel) => ({ value: 'embed', label: optionLabel })}
             />
           </div>
 

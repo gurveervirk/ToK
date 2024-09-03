@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: ToK
-  version: 1.0.5
+  version: 1.0.6
   description: API for interacting with a chatbot using LlamaIndex, Neo4j, and Ollama.
 servers:
   - url: http://localhost:5000
@@ -220,11 +220,17 @@ paths:
               schema:
                 type: object
                 properties:
-                  models:
+                  llm:
+                    type: array
+                    items:
+                      type: string
+                  embed:
                     type: array
                     items:
                       type: string
                   selectedModel:
+                    type: string
+                  selectedEmbedModel:
                     type: string
         '500':
           description: Internal server error
@@ -249,6 +255,9 @@ paths:
                 model:
                   type: string
                   description: The name of the model to select.
+                type:
+                  type: string
+                  description: The type of the model (llm or embed).
       responses:
         '200':
           description: Model changed successfully
@@ -291,6 +300,9 @@ paths:
                 model:
                   type: string
                   description: The name of the model to delete.
+                type:
+                  type: string
+                  description: The type of the model (llm or embed).
       responses:
         '200':
           description: Model deleted successfully
