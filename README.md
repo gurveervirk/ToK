@@ -1,7 +1,7 @@
 # Trove Of Knowledge (ToK)
 
 <div align="center">
-  <img height="300" width="300" alt="Trove of Knowledge Logo" src="https://github.com/gurveervirk/ToK/blob/main/app/public/tok.jpg">
+  <img height="300" width="300" alt="Trove of Knowledge Logo" src="https://github.com/gurveervirk/ToK/blob/main/ui/public/tok.jpg">
 </div>
 
 **Trove of Knowledge** (ToK) is a *fully local*, *high-quality*, and *extensible Retrieval-Augmented Generation (RAG) application* that leverages AI models and indices to query documents and generate contextually accurate responses. With ToK, you can upload documents and receive more informed answers tailored to your queries. Additionally, the app automatically stores your chats, allowing you to revisit and continue conversations at any time.
