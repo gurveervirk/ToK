@@ -1,4 +1,4 @@
-version: '1.0'
+version: '3.8'
 
 services:
   app:
@@ -10,9 +10,15 @@ services:
       OLLAMA_HOST: "host.docker.internal"
       OLLAMA_PORT: "11434"
     depends_on:
-      - neo4j
+      neo4j:
+        condition: service_healthy
+    networks:
+      - tok-network
+
   neo4j:
-    image: neo4j:5.11
+    build:
+      context: .  # Adjust path if needed
+      dockerfile: Dockerfile.neo4j
     environment:
       NEO4J_AUTH: neo4j/default_password
     ports:
@@ -20,6 +26,17 @@ services:
       - "7687:7687"
     volumes:
       - neo4j_data:/data
+    networks:
+      - tok-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7474"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
 
 volumes:
   neo4j_data:
+
+networks:
+  tok-network:

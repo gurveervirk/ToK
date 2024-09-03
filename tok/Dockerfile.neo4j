@@ -1,0 +1,5 @@
+# Dockerfile.neo4j
+FROM neo4j:5.11
+
+# Install curl
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
