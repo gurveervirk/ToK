@@ -1,0 +1,11 @@
+{
+  "database": "neo4j",
+  "password": "default_password",
+  "uri": "bolt://neo4j:7687",
+  "chunk_size": 1024,
+  "chunk_overlap": 20,
+  "temperature": 0.75,
+  "context_window": 3900,
+  "token_limit": 2048,
+  "chat_mode": "condense_plus_context"
+}
