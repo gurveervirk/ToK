@@ -31,8 +31,8 @@
 
 To run ToK, you'll need to install two dependencies:
 
-- **[Neo4j Desktop](https://neo4j.com/download/):** Used for top-tier vector and graph stores. (*install if running without docker / with the release exe*)
 - **[Ollama](https://ollama.com/download):** Facilitates easy model downloading, serving, and intelligent device loading. (*required*)
+- **[Neo4j Desktop](https://neo4j.com/download/):** Used for top-tier vector and graph stores. (*install if running without docker / with the exe in releases or for research purposes*)
 
 ### Setting Up Neo4j (IF Neo4j Desktop IS INSTALLED)
 
@@ -72,7 +72,7 @@ You have two main options to run ToK:
    docker-compose up -d
    ```
 
-### Option 2: Running ToK Executable
+### Option 2: Running ToK Executable (DEPRECATED) (NO LONGER MAINTAINED)
 
 1. Visit the [Releases](https://github.com/gurveervirk/ToK/releases) page and download the latest `ToK.exe` to a location/directory (the app creates necessary files and folders for correct working).
 2. Modify the settings by running the app once and clicking the settings icon at the top right hand corner:
@@ -92,6 +92,8 @@ After completing the setup:
 1. Launch *ToK*.
 2. Choose to either chat directly with the bot or upload documents using the top-right button for enhanced query responses.
 3. Enjoy the seamless experience of interacting with a locally-run, AI-powered knowledge assistant that keeps your data private and secure.
+
+> **Note:** On creating a new chat immediately after prompting the LLM / Chat Engine, the latest chat may not be visible in the sidebar along with chatting being unavailable for a few seconds. This may be due to the new chat being stored with an LLM-generated title.
 
 ## Visual Tour
 

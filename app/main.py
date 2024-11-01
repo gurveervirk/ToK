@@ -13,7 +13,8 @@ os.environ["NLTK_DATA"] = os.path.join(bundle_dir, 'nltk_data')
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
-from flaskwebgui import FlaskUI
+# Uncomment the line under to use FlaskUI
+# from flaskwebgui import FlaskUI
 from flask_swagger_ui import get_swaggerui_blueprint
 from llama_index.llms.ollama import Ollama
 from llama_index.embeddings.ollama import OllamaEmbedding
@@ -328,10 +329,10 @@ def query():
 @app.route('/api/history', methods=['GET'])
 def get_chat_history():
     session_titles = {
-        "Today": [],
-        "Last Week": [],
-        "Last Month": [],
-        "Older": []
+        "Today": {},
+        "Last Week": {},
+        "Last Month": {},
+        "Older": {}
     }
     today = datetime.now().date()
     last_week = today - timedelta(days=7)
@@ -344,13 +345,13 @@ def get_chat_history():
                     session_date = datetime.strptime(session_data[0].get('date'), "%Y-%m-%d %H:%M:%S.%f").date()
                     session_title = session_data[0].get('title')
                     if session_date == today:
-                        session_titles["Today"].append(session_title)
+                        session_titles["Today"][session_title] = filename
                     elif session_date > last_week:
-                        session_titles["Last Week"].append(session_title)
+                        session_titles["Last Week"][session_title] = filename
                     elif session_date > last_month:
-                        session_titles["Last Month"].append(session_title)
+                        session_titles["Last Month"][session_title] = filename
                     else:
-                        session_titles["Older"].append(session_title)
+                        session_titles["Older"][session_title] = filename
     return jsonify(session_titles)
 
 @app.route('/api/choose_chat_history', methods=['POST'])
@@ -369,7 +370,8 @@ def choose_chat_history():
                     global current_session
                     global current_session_updated
                     current_session = os.path.join("prev_msgs", filename)
-                    if current_session[0]["date"] != str(datetime.now()): current_session_updated = False
+                    current_session_data = json.load(open(current_session, 'r'))
+                    if current_session_data[0]["date"] != str(datetime.now()): current_session_updated = False
                     break
     
     if session_file is None:
@@ -523,6 +525,10 @@ def select_model():
                     bars[digest].update(completed - bars[digest].n)
 
                 current_digest = digest
+                if type == "llm":
+                    models["llm"].append(new_model)
+                else:
+                    models["embed"].append(new_model)
             
         except Exception as e:
             print(e)
@@ -530,7 +536,8 @@ def select_model():
             return jsonify({"error": str(e)}), 500
     
     if type == "llm":
-        models["llm"].append(new_model)
+        if new_model == current_model:
+            return jsonify({"message": "Model already selected"})
         current_model = new_model
         llm = Ollama(model=new_model, request_timeout=120.0, base_url="http://localhost:11434")
         Settings.llm = llm
@@ -540,7 +547,8 @@ def select_model():
             ), memory=memory, verbose=True
         )
     else:
-        models["embed"].append(new_model)
+        if new_model == current_embed_model:
+            return jsonify({"message": "Model already selected"})
         current_embed_model = new_model
         embed_model = OllamaEmbedding(model_name=new_model, base_url="http://localhost:11434")
         Settings.embed_model = embed_model
@@ -721,7 +729,9 @@ def index():
 
 # Initialize Flask
 def start_flask_app():
-    ui.run()
+    # Uncomment the line under to use FlaskUI
+    # ui.run()
+    app.run()
 
 def cleanup():
     global ollama_process
@@ -734,7 +744,8 @@ def cleanup():
     os.system("neo4j stop")
 
 if __name__ == '__main__':
-    ui = FlaskUI(app=app, server="flask", width=1280, height=720, port=5000, on_shutdown=cleanup) # Change width and height as needed
+    # Uncomment the line under to use FlaskUI
+    # ui = FlaskUI(app=app, server="flask", width=1280, height=720, port=5000, on_shutdown=cleanup)
     try:
         create_directory_if_not_exists('prev_msgs')
         start_services()
@@ -742,5 +753,6 @@ if __name__ == '__main__':
         start_flask_app()
         
     finally:
+        print("Cleaning up...")
         ollama_process.terminate()
         os.system("neo4j stop")

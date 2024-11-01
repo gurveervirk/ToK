@@ -16,9 +16,9 @@ function ChatArea({ messages, setMessages }) {
   const [useQueryEngine, setUseQueryEngine] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [models, setModels] = useState([{value: 'mistral:instruct', label: 'mistral:instruct'}]);
-  const [embed_models, setEmbedModels] = useState([{value: 'mxbai-embed-large', label: 'mxbai-embed-large'}]);
+  const [embed_models, setEmbedModels] = useState([{value: 'mxbai-embed-large:latest', label: 'mxbai-embed-large:latest'}]);
   const [selectedModel, setSelectedModel] = useState("mistral:instruct");
-  const [selectedEmbedModel, setSelectedEmbedModel] = useState("mxbai-embed-large");
+  const [selectedEmbedModel, setSelectedEmbedModel] = useState("mxbai-embed-large:latest");
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
