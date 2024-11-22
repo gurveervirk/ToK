@@ -7,7 +7,6 @@ sub_optimal.txt
 /tok/installer_script.iss
 /tok/TokInstaller.exe
 /tok/venv
-/tok/web/build
 /tok/build
 /tok/prev_msgs
 /tok/prompts.json
@@ -16,3 +15,4 @@ sub_optimal.txt
 /tok/tok.zip
 /tok/tok.ico
 /tok/nltk_data
+/venv
