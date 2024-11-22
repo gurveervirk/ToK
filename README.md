@@ -1,7 +1,7 @@
 # Trove Of Knowledge (ToK)
 
 <div align="center">
-  <img height="300" width="300" alt="Trove of Knowledge Logo" src="https://github.com/gurveervirk/ToK/blob/main/app/public/tok.jpg">
+  <img height="300" width="300" alt="Trove of Knowledge Logo" src="https://github.com/gurveervirk/ToK/blob/main/ui/public/tok.jpg">
 </div>
 
 **Trove of Knowledge** (ToK) is a *fully local*, *high-quality*, and *extensible Retrieval-Augmented Generation (RAG) application* that leverages AI models and indices to query documents and generate contextually accurate responses. With ToK, you can upload documents and receive more informed answers tailored to your queries. Additionally, the app automatically stores your chats, allowing you to revisit and continue conversations at any time.
@@ -31,10 +31,10 @@
 
 To run ToK, you'll need to install two dependencies:
 
-- **[Neo4j Desktop](https://neo4j.com/download/):** Used for top-tier vector and graph stores.
-- **[Ollama](https://ollama.com/download):** Facilitates easy model downloading, serving, and intelligent device loading.
+- **[Ollama](https://ollama.com/download):** Facilitates easy model downloading, serving, and intelligent device loading. (*required*)
+- **[Neo4j Desktop](https://neo4j.com/download/):** Used for top-tier vector and graph stores. (*install if running without docker / with the exe in releases or for research purposes*)
 
-### Setting Up Neo4j
+### Setting Up Neo4j (IF Neo4j Desktop IS INSTALLED)
 
 1. Download and install *Neo4j Desktop*.
 2. Add the **Neo4j bin path** to your system's **PATH** environment variable. This allows Neo4j to be accessed by ToK.
@@ -50,12 +50,35 @@ To run ToK, you'll need to install two dependencies:
 
 ## Getting Started
 
-1. Visit the [Releases](https://github.com/gurveervirk/ToK/releases) page and download the latest `ToK.exe` to a location/directory (app creates necessary files and folders for correct working).
+You have two main options to run ToK:
+
+### Option 1: Running ToK with Docker (RECOMMENDED)
+
+1. Ensure you have [Docker](https://www.docker.com/products/docker-desktop) and [Docker Compose](https://docs.docker.com/compose/install/) installed on your machine.
+2. Clone the repository:
+   ```bash
+   git clone https://github.com/gurveervirk/ToK.git
+   ```
+3. Navigate to the directory containing the `docker-compose.yml` file:
+   ```bash
+   cd ToK/docker
+   ```
+4. Serve Ollama on your local system. (*app may serve it automatically*)
+   ```bash
+   ollama serve
+   ```
+4. Start the application with Docker Compose:
+   ```bash
+   docker-compose up -d
+   ```
+
+### Option 2: Running ToK Executable (DEPRECATED) (NO LONGER MAINTAINED)
+
+1. Visit the [Releases](https://github.com/gurveervirk/ToK/releases) page and download the latest `ToK.exe` to a location/directory (the app creates necessary files and folders for correct working).
 2. Modify the settings by running the app once and clicking the settings icon at the top right hand corner:
    - **username:** Replace with your Neo4j database username.
    - **password:** Replace with the password you set in your Neo4j project.
    - **uri:** Replace with your Neo4j project's URI.
-
 
    > **Note:** The default username and URI are the default values for a Neo4j DB.
    > You can also modify it in `settings.json`, created by the app.
@@ -66,9 +89,11 @@ To run ToK, you'll need to install two dependencies:
 
 After completing the setup:
 
-1. Launch ToK from the desktop or start menu.
+1. Launch *ToK*.
 2. Choose to either chat directly with the bot or upload documents using the top-right button for enhanced query responses.
 3. Enjoy the seamless experience of interacting with a locally-run, AI-powered knowledge assistant that keeps your data private and secure.
+
+> **Note:** On creating a new chat immediately after prompting the LLM / Chat Engine, the latest chat may not be visible in the sidebar along with chatting being unavailable for a few seconds. This may be due to the new chat being stored with an LLM-generated title.
 
 ## Visual Tour
 

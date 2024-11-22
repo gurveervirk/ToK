@@ -3,7 +3,7 @@ import UseWindowDimensions from './UseWindowDimensions';
 import { Tooltip } from 'bootstrap';
 
 function LeftPanel({ isSidebarCollapsed, setMessages }) {
-  const [sessionTitles, setSessionTitles] = useState([]);
+  const [sessionTitles, setSessionTitles] = useState({});
   const [selectedSession, setSelectedSession] = useState('');
   const isSmall = UseWindowDimensions();
 
@@ -55,13 +55,13 @@ function LeftPanel({ isSidebarCollapsed, setMessages }) {
     }
   }, []);
 
-  const handleSessionSelect = (mapping) => {
+  const handleSessionSelect = (filename) => {
     fetch('http://127.0.0.1:5000/api/choose_chat_history', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ filename: mapping })
+      body: JSON.stringify({ filename })
     })
       .then(response => {
         if (!response.ok) {
@@ -70,8 +70,8 @@ function LeftPanel({ isSidebarCollapsed, setMessages }) {
         return response.json();
       })
       .then(data => {
-        setSelectedSession(mapping);
-        sessionStorage.setItem('selectedSession', mapping);
+        setSelectedSession(filename);
+        sessionStorage.setItem('selectedSession', filename);
         setMessages(() => {
           let nextId = 1; // Start id from 1
           const newMessages = [];
@@ -90,10 +90,25 @@ function LeftPanel({ isSidebarCollapsed, setMessages }) {
   };
 
   // Divide sessionTitles into different categories
-  const todayTitles = sessionTitles['Today'] || [];
-  const lastWeekTitles = sessionTitles['Last Week'] || [];
-  const lastMonthTitles = sessionTitles['Last Month'] || [];
-  const olderTitles = sessionTitles['Older'] || [];
+  const todayTitles = sessionTitles['Today'] || {};
+  const lastWeekTitles = sessionTitles['Last Week'] || {};
+  const lastMonthTitles = sessionTitles['Last Month'] || {};
+  const olderTitles = sessionTitles['Older'] || {};
+
+  const renderSessionButtons = (titles) => {
+    return Object.keys(titles).map((title, index) => (
+      <div className="w-100" key={index}>
+        <button
+          className={`btn btn-outline-dark d-block ${selectedSession && selectedSession === titles[title] ? 'active' : ''} mb-1`}
+          onClick={() => handleSessionSelect(titles[title])}
+          style={{ overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', whiteSpace: 'nowrap' }}
+          data-bs-toggle="tooltip" title={title}
+        >
+          {title}
+        </button>
+      </div>
+    ));
+  };
 
   return (
     <div id='sidebar' className={`${isSmall ? 'offcanvas offcanvas-start' : 'collapse collapse-horizontal'} ${isSidebarCollapsed ? (isSmall ? 'show' : 'hide') : (isSmall ? 'hide' : 'show')} h-100`} tabIndex={isSmall ? '-1' : ''} style={isSmall ? {} : { width: '15rem' }} data-bs-backdrop="false">
@@ -122,78 +137,30 @@ function LeftPanel({ isSidebarCollapsed, setMessages }) {
           </button>
         </div>
         <div className="py-3 flex-grow-1 d-flex flex-column justify-content-center align-items-center">
-          {todayTitles.length > 0 || lastWeekTitles.length > 0 || lastMonthTitles.length > 0 || olderTitles.length > 0 ? (
+          {Object.keys(todayTitles).length > 0 || Object.keys(lastWeekTitles).length > 0 || Object.keys(lastMonthTitles).length > 0 || Object.keys(olderTitles).length > 0 ? (
             <>
-              {todayTitles.length > 0 && (
+              {Object.keys(todayTitles).length > 0 && (
                 <>
                   <h5>Today</h5>
-                  {todayTitles.map((mapping, index) => (
-                    <div className="w-100">
-                      <button
-                        key={index}
-                        className={`btn btn-outline-dark d-block ${selectedSession && selectedSession === mapping ? 'active' : ''} mb-1`}
-                        onClick={() => handleSessionSelect(mapping)}
-                        style={{ overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', whiteSpace: 'nowrap' }}
-                        data-bs-toggle="tooltip" title={mapping}
-                      >
-                        {mapping}
-                      </button>
-                    </div>
-                  ))}
+                  {renderSessionButtons(todayTitles)}
                 </>
               )}
-              {lastWeekTitles.length > 0 && (
+              {Object.keys(lastWeekTitles).length > 0 && (
                 <>
                   <h5>Last Week</h5>
-                  {lastWeekTitles.map((mapping, index) => (
-                    <div className="w-100">
-                      <button
-                        key={index}
-                        className={`btn btn-outline-dark d-block ${selectedSession && selectedSession === mapping ? 'active' : ''} mb-1`}
-                        onClick={() => handleSessionSelect(mapping)}
-                        style={{ overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', whiteSpace: 'nowrap' }}
-                        data-bs-toggle="tooltip" title={mapping}
-                      >
-                        {mapping}
-                      </button>
-                    </div>
-                  ))}
+                  {renderSessionButtons(lastWeekTitles)}
                 </>
               )}
-              {lastMonthTitles.length > 0 && (
+              {Object.keys(lastMonthTitles).length > 0 && (
                 <>
                   <h5>Last Month</h5>
-                  {lastMonthTitles.map((mapping, index) => (
-                    <div className="w-100">
-                      <button
-                        key={index}
-                        className={`btn btn-outline-dark d-block ${selectedSession && selectedSession === mapping ? 'active' : ''} mb-1`}
-                        onClick={() => handleSessionSelect(mapping)}
-                        style={{ overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', whiteSpace: 'nowrap' }}
-                        data-bs-toggle="tooltip" title={mapping}
-                      >
-                        {mapping}
-                      </button>
-                    </div>
-                  ))}
+                  {renderSessionButtons(lastMonthTitles)}
                 </>
               )}
-              {olderTitles.length > 0 && (
+              {Object.keys(olderTitles).length > 0 && (
                 <>
                   <h5>Older</h5>
-                  {olderTitles.map((mapping, index) => (
-                    <div className="w-100">
-                      <button
-                        key={index}
-                        className={`btn btn-outline-dark d-block ${selectedSession && selectedSession === mapping ? 'active' : ''} mb-1`}
-                        onClick={() => handleSessionSelect(mapping)}
-                        style={{ overflow: 'hidden', textOverflow: 'ellipsis', width: '100%', whiteSpace: 'nowrap' }}
-                        data-bs-toggle="tooltip" title={mapping}
-                      >
-                        {mapping}
-                      </button>
-                    </div>
-                  ))}
+                  {renderSessionButtons(olderTitles)}
                 </>
               )}
             </>

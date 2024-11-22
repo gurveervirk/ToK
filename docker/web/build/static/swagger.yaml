@@ -1,0 +1,552 @@
+openapi: 3.0.0
+info:
+  title: ToK
+  version: 1.0.6
+  description: API for interacting with a chatbot using LlamaIndex, Neo4j, and Ollama.
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+
+paths:
+  /api/query:
+    post:
+      summary: Submit a query to the chatbot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: The query to ask the chatbot.
+                useQueryEngine:
+                  type: boolean
+                  description: Whether to use the chat engine or not.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: The chatbot's response to the query.
+        '400':
+          description: Bad request (missing parameters)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /api/history:
+    get:
+      summary: Retrieve chat history
+      responses:
+        '200':
+          description: Successful retrieval of chat history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Today:
+                    type: array
+                    items:
+                      type: string
+                  Last Week:
+                    type: array
+                    items:
+                      type: string
+                  Last Month:
+                    type: array
+                    items:
+                      type: string
+                  Older:
+                    type: array
+                    items:
+                      type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /api/choose_chat_history:
+    post:
+      summary: Load a previous chat session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filename:
+                  type: string
+                  description: The name of the session file to load.
+      responses:
+        '200':
+          description: Successful loading of the session
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        '400':
+          description: Bad request (missing filename parameter)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '404':
+          description: Session file not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /api/add_new_documents:
+    post:
+      summary: Add new documents to the vector store
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                metadata:
+                  type: string
+                  description: Metadata in JSON format
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Files to be added.
+      responses:
+        '200':
+          description: Successful addition of documents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: string
+        '400':
+          description: Bad request (missing files or metadata)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /api/new_chat:
+    get:
+      summary: Start a new chat session
+      responses:
+        '200':
+          description: New chat session started successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /api/list_models:
+    get:
+      summary: List available models
+      responses:
+        '200':
+          description: List of models retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  llm:
+                    type: array
+                    items:
+                      type: string
+                  embed:
+                    type: array
+                    items:
+                      type: string
+                  selectedModel:
+                    type: string
+                  selectedEmbedModel:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /api/select_model:
+    post:
+      summary: Select a model to use
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                model:
+                  type: string
+                  description: The name of the model to select.
+                type:
+                  type: string
+                  description: The type of the model (llm or embed).
+      responses:
+        '200':
+          description: Model changed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Bad request (missing model parameter)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /api/delete_model:
+    post:
+      summary: Delete a model
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                model:
+                  type: string
+                  description: The name of the model to delete.
+                type:
+                  type: string
+                  description: The type of the model (llm or embed).
+      responses:
+        '200':
+          description: Model deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Bad request (missing model parameter)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /api/prompts:
+    get:
+      summary: List available prompts
+      responses:
+        '200':
+          description: List of prompts retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  prompts:
+                    type: object
+                    description: Available prompts
+                    example: 
+                      LLM: 
+                        - label: "Default"
+                          content: "Respond as concisely as possible."
+                        - label: "Verbose"
+                          content: "Respond with detailed explanations."
+                      Chat:
+                        - label: "Default"
+                          content: "Engage in a friendly and informal conversation."
+                        - label: "Formal"
+                          content: "Engage in a formal and professional conversation."
+                  selectedLLMPrompt:
+                    type: object
+                    example: 
+                      label: "Verbose"
+                      content: "Respond with detailed explanations."
+                  selectedChatEnginePrompt:
+                    type: object
+                    example: 
+                      label: "Formal"
+                      content: "Engage in a formal and professional conversation."
+                  defaults:
+                    type: object
+                    properties:
+                      LLM:
+                        type: integer
+                      Chat Engine:
+                        type: integer
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+    post:
+      summary: Update the prompts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                LLM:
+                  type: array
+                  items:
+                    type: object
+                Chat:
+                  type: array
+                  items:
+                    type: object
+                defaults:
+                  type: object
+                  properties:
+                    LLM:
+                      type: integer
+                    Chat Engine:
+                      type: integer
+                selectedLLMPrompt:
+                  type: object
+                selectedChatEnginePrompt:
+                  type: object
+      responses:
+        '200':
+          description: Prompts updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /api/delete_prompt:
+    post:
+      summary: Delete a prompt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  description: The type of the prompt (LLM or Chat).
+                label:
+                  type: string
+                  description: The label of the prompt to delete.
+      responses:
+        '200':
+          description: Prompt deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Bad request (missing type or label)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /api/settings:
+    get:
+      summary: Retrieve current settings
+      responses:
+        '200':
+          description: Successfully retrieved settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  settings:
+                    type: object
+                    description: Current settings
+                    example: 
+                      database:
+                        uri: "bolt://localhost:7687"
+                        username: "neo4j"
+                        password: "password"
+                      llamaindex:
+                        index_path: "index.json"
+                      model:
+                        name: "GPT-3.5-turbo"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+    post:
+      summary: Update settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                settings:
+                  type: object
+                  description: Updated settings.
+                  example: 
+                    database:
+                      uri: "bolt://localhost:7687"
+                      username: "neo4j"
+                      password: "newpassword"
+                    llamaindex:
+                      index_path: "new_index.json"
+                    model:
+                      name: "GPT-4.0-turbo"
+      responses:
+        '200':
+          description: Successfully updated settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string

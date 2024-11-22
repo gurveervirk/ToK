@@ -13,7 +13,7 @@ const CustomOptionForModel = (props) => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ model: data.value }),
+          body: JSON.stringify({ model: data.label, type: data.value }),
         });
         if (!response.ok) {
           throw new Error('Failed to delete model');

@@ -1,7 +1,7 @@
 {
   "database": "neo4j",
   "password": "default_password",
-  "uri": "bolt://localhost:7687",
+  "uri": "bolt://neo4j:7687",
   "chunk_size": 1024,
   "chunk_overlap": 20,
   "temperature": 0.75,

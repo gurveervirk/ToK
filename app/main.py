@@ -13,9 +13,11 @@ os.environ["NLTK_DATA"] = os.path.join(bundle_dir, 'nltk_data')
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
-from flaskwebgui import FlaskUI
+# Uncomment the line under to use FlaskUI
+# from flaskwebgui import FlaskUI
+from flask_swagger_ui import get_swaggerui_blueprint
 from llama_index.llms.ollama import Ollama
-from llama_index.embeddings.fastembed import FastEmbedEmbedding
+from llama_index.embeddings.ollama import OllamaEmbedding
 from llama_index.vector_stores.neo4jvector import Neo4jVectorStore
 from llama_index.core.prompts import ChatMessage
 from llama_index.core.memory import ChatMemoryBuffer
@@ -33,6 +35,20 @@ import platform
 app = Flask(__name__, static_folder='web/build', static_url_path='/')
 ollama_process = None
 CORS(app)
+
+# Path to your Swagger YAML file
+SWAGGER_URL = '/api/docs'  # URL for exposing Swagger UI
+API_URL = '/swagger.yaml'  # URL for your swagger.yaml file
+
+# Register the Swagger UI blueprint at /api/docs
+swaggerui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={  # Swagger UI config overrides
+        'app_name': "ToK"
+    }
+)
+app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
 def start_services():
     global ollama_process
@@ -66,6 +82,13 @@ def load_settings():
     try:
         with open('settings.json', 'r') as f:
             settings = json.load(f)
+        
+        if not isinstance(settings["password"], str):
+            print("Password not a string. Required for correct operation. Fixing...")
+            with open('settings.json', 'w') as f:
+                settings["password"] = str(settings["password"])
+                json.dump(settings, f)
+
     except FileNotFoundError:
         print("The settings file doesn't exist. Creating a new one...")
         settings = {
@@ -107,18 +130,73 @@ def load_prompts():
         with open('prompts.json', 'w+') as f:
             json.dump(prompts, f)
 
+def load_models():
+    global models
+    try:
+        with open('models.json', 'r') as f:
+            models = json.load(f)
+    except FileNotFoundError:
+        print("The models file doesn't exist. Creating a new one...")
+        models = {
+            "llm": ["mistral:instruct"],
+            "embed": ["mxbai-embed-large:latest"]
+        }
+        with open('models.json', 'w+') as f:
+            json.dump(models, f)
+    finally:
+        ollama_models = [model["name"] for model in ollama.list()['models']]
+        if "mistral:instruct" not in ollama_models:
+            print("Loading default llm...")
+            current_digest, bars = '', {}
+            for progress in ollama.pull("mistral:instruct", stream=True):
+                digest = progress.get('digest', '')
+                if digest != current_digest and current_digest in bars:
+                    bars[current_digest].close()
+
+                if not digest:
+                    print(progress.get('status'))
+                    continue
+
+                if digest not in bars and (total := progress.get('total')):
+                    bars[digest] = tqdm(total=total, desc=f'pulling {digest[7:19]}', unit='B', unit_scale=True)
+
+                if completed := progress.get('completed'):
+                    bars[digest].update(completed - bars[digest].n)
+
+                current_digest = digest
+        if "mxbai-embed-large:latest" not in ollama_models:
+            print("Loading default embed model...")
+            current_digest, bars = '', {}
+            for progress in ollama.pull("mxbai-embed-large:latest", stream=True):
+                digest = progress.get('digest', '')
+                if digest != current_digest and current_digest in bars:
+                    bars[current_digest].close()
+
+                if not digest:
+                    print(progress.get('status'))
+                    continue
+
+                if digest not in bars and (total := progress.get('total')):
+                    bars[digest] = tqdm(total=total, desc=f'pulling {digest[7:19]}', unit='B', unit_scale=True)
+
+                if completed := progress.get('completed'):
+                    bars[digest].update(completed - bars[digest].n)
+
+                current_digest = digest
+
 # Initialize global variables
 def initialize_globals():
-    global llm, vector_store, vector_index, storage_context, chat_engine, memory, models, current_model, settings, prompts, selected_LLM_prompt, selected_chat_engine_prompt
+    global llm, vector_store, vector_index, storage_context, chat_engine, memory, models, current_model, current_embed_model, settings, prompts, selected_LLM_prompt, selected_chat_engine_prompt
 
     try:
         load_settings()
         load_prompts()
-        models = [model["name"] for model in ollama.list()['models']]
+        load_models()
         current_model = "mistral:instruct"
+        current_embed_model = "mxbai-embed-large:latest"
 
         # Initialize the embed model
-        embed_model = FastEmbedEmbedding(model_name="mixedbread-ai/mxbai-embed-large-v1")
+        embed_model = OllamaEmbedding(model_name=current_embed_model, base_url="http://localhost:11434")
         Settings.embed_model = embed_model
         llm = Ollama(model=current_model, request_timeout=120.0, base_url="http://localhost:11434", temperature=settings["temperature"], context_window=settings["context_window"])
         Settings.llm = llm
@@ -170,6 +248,11 @@ def save_to_session(session, data):
         session_file.seek(0)
         json.dump(session_data, session_file)
         session_file.truncate()
+
+# Serve the Swagger YAML file directly
+@app.route('/swagger.yaml')
+def swagger_yaml():
+    return send_from_directory('web/build/static', 'swagger.yaml')
 
 @app.route('/api/query', methods=['POST'])
 def query():
@@ -246,10 +329,10 @@ def query():
 @app.route('/api/history', methods=['GET'])
 def get_chat_history():
     session_titles = {
-        "Today": [],
-        "Last Week": [],
-        "Last Month": [],
-        "Older": []
+        "Today": {},
+        "Last Week": {},
+        "Last Month": {},
+        "Older": {}
     }
     today = datetime.now().date()
     last_week = today - timedelta(days=7)
@@ -262,13 +345,13 @@ def get_chat_history():
                     session_date = datetime.strptime(session_data[0].get('date'), "%Y-%m-%d %H:%M:%S.%f").date()
                     session_title = session_data[0].get('title')
                     if session_date == today:
-                        session_titles["Today"].append(session_title)
+                        session_titles["Today"][session_title] = filename
                     elif session_date > last_week:
-                        session_titles["Last Week"].append(session_title)
+                        session_titles["Last Week"][session_title] = filename
                     elif session_date > last_month:
-                        session_titles["Last Month"].append(session_title)
+                        session_titles["Last Month"][session_title] = filename
                     else:
-                        session_titles["Older"].append(session_title)
+                        session_titles["Older"][session_title] = filename
     return jsonify(session_titles)
 
 @app.route('/api/choose_chat_history', methods=['POST'])
@@ -287,7 +370,8 @@ def choose_chat_history():
                     global current_session
                     global current_session_updated
                     current_session = os.path.join("prev_msgs", filename)
-                    if current_session[0]["date"] != str(datetime.now()): current_session_updated = False
+                    current_session_data = json.load(open(current_session, 'r'))
+                    if current_session_data[0]["date"] != str(datetime.now()): current_session_updated = False
                     break
     
     if session_file is None:
@@ -395,8 +479,9 @@ def new_chat():
 def list_models():
     global models
     global current_model
+    global current_embed_model
     try:
-        return jsonify({"models": models, "selectedModel": current_model})
+        return jsonify({"llm": models["llm"], "embed": models["embed"], "selectedModel": current_model, "selectedEmbedModel": current_embed_model})
     except Exception as e:
         print(e)
         traceback.print_exc()
@@ -412,14 +497,16 @@ def select_model():
     global vector_index
     global selected_chat_engine_prompt
     global settings
+    global current_embed_model
 
     data = request.json
     new_model = data.get('model')
+    type = data.get('type')
 
     if new_model is None:
         return jsonify({"error": "Model parameter missing"}), 400
     
-    if new_model not in models:
+    if new_model not in models["llm"] and new_model not in models["embed"]:
         try:
             current_digest, bars = '', {}
             for progress in ollama.pull(new_model, stream=True):
@@ -438,28 +525,44 @@ def select_model():
                     bars[digest].update(completed - bars[digest].n)
 
                 current_digest = digest
-
-            models = [model["name"] for model in ollama.list()['models']]
+                if type == "llm":
+                    models["llm"].append(new_model)
+                else:
+                    models["embed"].append(new_model)
             
         except Exception as e:
             print(e)
             traceback.print_exc()
             return jsonify({"error": str(e)}), 500
-        
-    current_model = new_model
-    llm = Ollama(model=new_model, request_timeout=120.0, base_url="http://localhost:11434")
-    Settings.llm = llm
-    chat_engine = vector_index.as_chat_engine(chat_mode=settings["chat_mode"], llm=llm,
-        context_prompt=(
-            selected_chat_engine_prompt["value"]
-        ), memory=memory, verbose=True
-    )
+    
+    if type == "llm":
+        if new_model == current_model:
+            return jsonify({"message": "Model already selected"})
+        current_model = new_model
+        llm = Ollama(model=new_model, request_timeout=120.0, base_url="http://localhost:11434")
+        Settings.llm = llm
+        chat_engine = vector_index.as_chat_engine(chat_mode=settings["chat_mode"], llm=llm,
+            context_prompt=(
+                selected_chat_engine_prompt["value"]
+            ), memory=memory, verbose=True
+        )
+    else:
+        if new_model == current_embed_model:
+            return jsonify({"message": "Model already selected"})
+        current_embed_model = new_model
+        embed_model = OllamaEmbedding(model_name=new_model, base_url="http://localhost:11434")
+        Settings.embed_model = embed_model
+    
+    with open('models.json', 'w') as f:
+        json.dump(models, f)
+    
     return jsonify({"message": "Model changed successfully"})
 
 @app.route('/api/delete_model', methods=['POST'])
 def delete_model():
     global models
     global current_model
+    global current_embed_model
     global llm
     global chat_engine
     global memory
@@ -470,22 +573,32 @@ def delete_model():
 
     data = request.json
     model = data.get('model')
+    type = data.get('type')
 
     if model is None:
         return jsonify({"error": "Model parameter missing"}), 400
 
     try:
-        if model == current_model:
-            current_model = "mistral:instruct"
-            llm = Ollama(model=current_model, request_timeout=120.0, base_url="http://localhost:11434")
-            Settings.llm = llm
-            chat_engine = vector_index.as_chat_engine(chat_mode=settings["chat_mode"], llm=llm,
-                context_prompt=(
-                    selected_chat_engine_prompt["value"]
-                ), memory=memory, verbose=True
-            )
+        if type == 'llm':
+            if model == current_model:
+                current_model = "mistral:instruct"
+                llm = Ollama(model=current_model, request_timeout=120.0, base_url="http://localhost:11434", temperature=settings["temperature"], context_window=settings["context_window"])
+                Settings.llm = llm
+                chat_engine = vector_index.as_chat_engine(chat_mode=settings["chat_mode"], llm=llm,
+                    context_prompt=(
+                        selected_chat_engine_prompt["value"]
+                    ), memory=memory, verbose=True
+                )
+            models["llm"] = [m for m in models["llm"] if m != model]
+        else:
+            if model == current_embed_model:
+                current_embed_model = "mxbai-embed-large:latest"
+                embed_model = OllamaEmbedding(model_name=current_embed_model, base_url="http://localhost:11434")
+                Settings.embed_model = embed_model
+            models["embed"] = [m for m in models["embed"] if m != model]
         ollama.delete(model)
-        models = [model["name"] for model in ollama.list()['models']]
+        with open('models.json', 'w') as f:
+            json.dump(models, f)
         return jsonify({"message": "Model deleted successfully"})
     except Exception as e:
         print(e)
@@ -616,7 +729,9 @@ def index():
 
 # Initialize Flask
 def start_flask_app():
-    ui.run()
+    # Uncomment the line under to use FlaskUI
+    # ui.run()
+    app.run()
 
 def cleanup():
     global ollama_process
@@ -629,7 +744,8 @@ def cleanup():
     os.system("neo4j stop")
 
 if __name__ == '__main__':
-    ui = FlaskUI(app=app, server="flask", width=1280, height=720, port=5000, on_shutdown=cleanup) # Change width and height as needed
+    # Uncomment the line under to use FlaskUI
+    # ui = FlaskUI(app=app, server="flask", width=1280, height=720, port=5000, on_shutdown=cleanup)
     try:
         create_directory_if_not_exists('prev_msgs')
         start_services()
@@ -637,5 +753,6 @@ if __name__ == '__main__':
         start_flask_app()
         
     finally:
+        print("Cleaning up...")
         ollama_process.terminate()
         os.system("neo4j stop")
