@@ -390,15 +390,26 @@ def add_new_documents():
 
             metadata = json.loads(metadata)
 
-            # Save files to the temporary directory
+            # Save files to the temporary directory, maintaining folder structure
             for file in files:
-                file_path = os.path.join(temp_folder, file.filename)
-                file.save(file_path)
+                relative_path = file.filename  # This will include the relative folder structure
+                save_path = os.path.join(temp_folder, relative_path)
+
+                # Create necessary directories
+                os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+                # Save the file
+                file.save(save_path)
 
             # Convert metadata from list of dicts to a single dict
             meta = lambda filename: {"file_name": filename, **{m["key"]: m["value"] for m in metadata if m["key"] and m["value"]}}
 
-            files = [os.path.join(temp_folder, file) for file in os.listdir(temp_folder)]
+            # Collect all file paths for the SimpleDirectoryReader
+            files = [
+                os.path.join(root, name)
+                for root, _, filenames in os.walk(temp_folder)
+                for name in filenames
+            ]
 
             # Use SimpleDirectoryReader to read the saved files
             documents = SimpleDirectoryReader(input_files=files, file_metadata=meta, recursive=True).load_data()
@@ -421,9 +432,7 @@ def add_new_documents():
             chat_engine = vector_index.as_chat_engine(
                 chat_mode=settings["chat_mode"],
                 llm=llm,
-                context_prompt=(
-                    selected_chat_engine_prompt["value"]
-                ),
+                context_prompt=(selected_chat_engine_prompt["value"]),
                 memory=memory,
                 verbose=True
             )
