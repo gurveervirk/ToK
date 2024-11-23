@@ -4,6 +4,20 @@ sub_optimal.txt
 /settings.json
 /app/main.spec
 /prev_msgs
+<<<<<<< HEAD
+/tok/installer_script.iss
+/tok/TokInstaller.exe
+/tok/venv
+/tok/build
+/tok/prev_msgs
+/tok/prompts.json
+/tok/tiktoken_cache
+/other_prev_msgs
+/tok/tok.zip
+/tok/tok.ico
+/tok/nltk_data
+/venv
+=======
 /app/installer_script.iss
 /app/TokInstaller.exe
 /app/venv
@@ -16,3 +30,4 @@ sub_optimal.txt
 /docker/nltk_data
 /app/tiktoken_cache
 /docker/tiktoken_cache
+>>>>>>> d1b4ee2266cf7cc91a6940a86d2ae3dc1ba1a85e
