@@ -136,4 +136,10 @@ Please find the code for the above results in the [this link](https://www.kaggle
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=gurveervirk/ToK&type=Date)](https://star-history.com/#gurveervirk/ToK&Date)
+<a href="https://star-history.com/#gurveervirk/ToK&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=gurveervirk/ToK&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=gurveervirk/ToK&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=gurveervirk/ToK&type=Date" />
+ </picture>
+</a>
