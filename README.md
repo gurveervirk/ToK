@@ -8,13 +8,13 @@
 
 ## Table of Contents
 
-- 📋 [Features](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#features)
-- 🛠️ [Prerequisites](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#prerequisites)
-- 🚀 [Getting Started](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#getting-started)
-- 📝 [Usage](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#usage)
-- 🎥 [Video Demo](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#video-demo)
-- 🌟 [Visual Tour](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#visual-tour)
-- 📊 [Results](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#results)
+- 📋 [Features](#features)
+- 🛠️ [Prerequisites](#prerequisites)
+- 🚀 [Getting Started](#getting-started)
+- 📝 [Usage](#usage)
+- 🎥 [Video Demo](#video-demo)
+- 🌟 [Visual Tour](#visual-tour)
+- 📊 [Results](#results)
 
 ## Features
 
