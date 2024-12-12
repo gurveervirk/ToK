@@ -129,7 +129,7 @@ Explore the key features and user interface of ToK through the images below:
 This app has been successfully tested on a subset of the TriviaQA dataset, and the results are as follows:
 
 <div>
-  <img width="400" alt="results" src="https://github.com/gurveervirk/ToK/blob/main/misc/pics/results.png">
+  <img alt="results" src="https://github.com/gurveervirk/ToK/blob/main/misc/pics/results.png">
 </div>
 
 Please find the code for the above results in the [this link](https://www.kaggle.com/dalix56/tok-eval).
