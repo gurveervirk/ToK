@@ -12,7 +12,9 @@
 - 🛠️ [Prerequisites](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#prerequisites)
 - 🚀 [Getting Started](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#getting-started)
 - 📝 [Usage](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#usage)
+- 🎥 [Video Demo](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#video-demo)
 - 🌟 [Visual Tour](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#visual-tour)
+- 📊 [Results](https://github.com/gurveervirk/ToK/tree/main/README.md?tab=readme-ov-file#results)
 
 ## Features
 
@@ -95,17 +97,17 @@ After completing the setup:
 
 > **Note:** On creating a new chat immediately after prompting the LLM / Chat Engine, the latest chat may not be visible in the sidebar along with chatting being unavailable for a few seconds. This may be due to the new chat being stored with an LLM-generated title.
 
+## Video Demo
+
+Watch the video below to see ToK in action:
+
+[![ToK Video Demo](https://github.com/gurveervirk/ToK/blob/main/misc/pics/landing_page.png)](https://youtu.be/kCs0xizstNg)
+
 ## Visual Tour
 
 Explore the key features and user interface of ToK through the images below:
 
 <table align="center">
-  <tr>
-    <td align="center" colspan=3>
-      <h4>Landing Page</h4>
-      <img alt="landing_page" src="https://github.com/gurveervirk/ToK/blob/main/misc/pics/landing_page.png"
-    </td>
-  </tr>
   <tr>
     <td align="center">
       <h4>Upload Modal</h4>
@@ -121,3 +123,17 @@ Explore the key features and user interface of ToK through the images below:
     </td>
   </tr>
 </table>
+
+## Results
+
+This app has been successfully tested on a subset of the TriviaQA dataset, and the results are as follows:
+
+<div>
+  <img width="400" alt="results" src="https://github.com/gurveervirk/ToK/blob/main/misc/pics/results.png">
+</div>
+
+Please find the code for the above results in the [this link](https://www.kaggle.com/dalix56/tok-eval).
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=gurveervirk/ToK&type=Date)](https://star-history.com/#gurveervirk/ToK&Date)
